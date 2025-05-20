@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Panel Administratora</title>
+</head>
+<body>
+    <h2>Panel Administratora – Podsumowanie mieszkań</h2>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Numer</th>
+                <th>Piętro</th>
+                <th>Powierzchnia (m²)</th>
+                <th>Czynsz (zł)</th>
+                <th>Śmieci (zł)</th>
+                <th>Woda (zł)</th>
+                <th>Gaz (zł)</th>
+                <th>Najemca</th>
+                <th>Liczba osób</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tenant in tenants %}
+                <tr>
+                    <td>{{ tenant.apartment.number }}</td>
+                    <td>{{ tenant.apartment.floor }}</td>
+                    <td>{{ tenant.apartment.area }}</td>
+                    <td>{{ tenant.apartment.rent }}</td>
+                    <td>{{ tenant.apartment.garbage_fee }}</td>
+                    <td>{{ tenant.apartment.water_fee }}</td>
+                    <td>{{ tenant.apartment.gas_fee }}</td>
+                    <td>{{ tenant.user.get_full_name }} ({{ tenant.user.username }})</td>
+                    <td>{{ tenant.num_occupants }}</td>
+                    <td>
+                        <a href="/admin/app/apartment/{{ tenant.apartment.id }}/change/">Edytuj</a><br>
+                        <a href="/admin/app/tenant/add/">Dodaj lokatora</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <p>
+        <a href="{% url 'add_apartment' %}">➕ Dodaj mieszkanie</a> |
+        <a href="{% url 'add_tenant' %}">➕ Dodaj lokatora</a>
+    </p>
+    <p>
+         <a href="{% url 'add_apartment' %}">➕ Dodaj mieszkanie</a> |
+        <a href="{% url 'import_apartments' %}">📥 Importuj z CSV</a>
+    </p>
+    <p><a href="{% url 'logout' %}">Wyloguj</a></p>
+</body>
+</html>

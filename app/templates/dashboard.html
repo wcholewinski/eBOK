@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Panel Lokatora</title>
+</head>
+<body>
+    <h2>Witaj {{ request.user.username }}</h2>
+
+    {% if tenant %}
+        <h3>Twoje mieszkanie:</h3>
+        <ul>
+            <li>Numer: {{ tenant.apartment.number }}</li>
+            <li>Piętro: {{ tenant.apartment.floor }}</li>
+            <li>Powierzchnia: {{ tenant.apartment.area }} m²</li>
+            <li>Czynsz: {{ tenant.apartment.rent }} zł</li>
+            <li>Opłata za śmieci: {{ tenant.apartment.garbage_fee }} zł</li>
+            <li>Opłata za wodę: {{ tenant.apartment.water_fee }} zł</li>
+            <li>Opłata za gaz: {{ tenant.apartment.gas_fee }} zł</li>
+            <li>Liczba mieszkańców: {{ tenant.num_occupants }}</li>
+        </ul>
+    {% else %}
+        <p>Jesteś administratorem.</p>
+    {% endif %}
+
+    <p><a href="{% url 'logout' %}">Wyloguj</a></p>
+</body>
+</html>

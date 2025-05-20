@@ -1,0 +1,7 @@
+<h2>Dodaj lokatora</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Utwórz lokatora</button>
+</form>
+<a href="{% url 'admin_dashboard' %}">Powrót</a>

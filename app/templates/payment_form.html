@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head><title>{{ is_edit|yesno:"Edytuj płatność,Dodaj płatność" }}</title></head>
+<body>
+  <h2>{{ is_edit|yesno:"Edytuj płatność","Dodaj płatność" }}</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Zapisz</button>
+  </form>
+  <p><a href="{% url 'admin_payments' %}">Anuluj</a></p>
+</body>
+</html>

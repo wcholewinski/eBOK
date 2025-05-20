@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head><title>Wszystkie płatności</title></head>
+<body>
+  <h2>Wszystkie płatności</h2>
+  <p><a href="{% url 'add_payment' %}">➕ Dodaj płatność</a></p>
+  <table border="1">
+    <tr>
+      <th>Lokator</th><th>Data</th><th>Typ</th><th>Kwota</th><th>Status</th><th>Akcje</th>
+    </tr>
+    {% for p in payments %}
+    <tr>
+      <td>{{ p.tenant.user.username }}</td>
+      <td>{{ p.date }}</td>
+      <td>{{ p.get_type_display }}</td>
+      <td>{{ p.amount }} zł</td>
+      <td>{{ p.get_status_display }}</td>
+      <td><a href="{% url 'edit_payment' p.pk %}">Edytuj</a></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6">Brak płatności</td></tr>
+    {% endfor %}
+  </table>
+  <p><a href="{% url 'admin_dashboard' %}">Powrót do panelu</a></p>
+</body>
+</html>
