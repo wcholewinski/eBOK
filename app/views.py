@@ -2,6 +2,10 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Apartment, Tenant, Payment, Ticket
 from .forms import ApartmentForm, TenantForm, PaymentForm, CSVImportForm, TicketForm, TicketStatusForm
+import csv
+from django.http import HttpResponse
+from django.shortcuts import render, redirect
+from django.contrib import messages
 
 # ─── PANEL ADMINA: MIESZKANIA i LOKATORZY ───
 @user_passes_test(lambda u: u.is_superuser)
@@ -50,7 +54,7 @@ def payment_form(request, pk=None):
         return redirect('admin_payments')
     return render(request, 'payment_form.html', {'form': form, 'is_edit': bool(pk)})
 
-# ─── MODUŁ ZGŁOSZEŃ S ERWISOWYCH ───
+# ─── MODUŁ ZGŁOSZEŃ SERWISOWYCH ───
 @login_required
 def tickets(request):
     tenant = get_object_or_404(Tenant, user=request.user)
@@ -81,34 +85,37 @@ def ticket_edit(request, pk):
         return redirect('admin_tickets')
     return render(request, 'ticket_edit.html', {'form': form, 'ticket': ticket})
 
-# ─── IMPORT MIESZKAŃ z CSV ───
-@user_passes_test(lambda u: u.is_superuser)
-def import_apartments(request):
-    import csv, io
-    from .forms import CSVImportForm
-    if request.method == 'POST':
-        form = CSVImportForm(request.POST, request.FILES)
-        if form.is_valid():
-            decoded = request.FILES['csv_file'].read().decode('utf-8')
-            reader = csv.DictReader(io.StringIO(decoded))
-            count = 0
-            for row in reader:
-                Apartment.objects.update_or_create(
-                    number=row['number'],
-                    defaults={
-                        'floor': int(row['floor']),
-                        'area': float(row['area']),
-                        'rent': float(row['rent']),
-                        'trash_fee': float(row['trash_fee']),
-                        'water_fee': float(row['water_fee']),
-                        'gas_fee': float(row['gas_fee']),
-                    }
-                )
-                count += 1
-            return redirect('admin_dashboard')
-    else:
-        form = CSVImportForm()
-    return render(request, 'import_apartments.html', {'form': form})
+# ─── IMPORT/ EKSPORT z CSV ───
+def export_apartment_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="apartment.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['numer', 'pietro', 'powierzchnia'])
+
+    for m in Apartment.objects.all():
+        writer.writerow([m.numer, m.pietro, m.powierzchnia])
+
+    return response
+
+def import_apartment_csv(request):
+    if request.method == 'POST' and request.FILES['csv_file']:
+        csv_file = request.FILES['csv_file']
+        decoded = csv_file.read().decode('utf-8').splitlines()
+        reader = csv.DictReader(decoded)
+
+        for row in reader:
+            Apartment.objects.update_or_create(
+                numer=row['numer'],
+                defaults={
+                    'pietro': row['pietro'],
+                    'powierzchnia': row['powierzchnia']
+                }
+            )
+        messages.success(request, 'Dane zaimportowane!')
+        return redirect('lista_mieszkan')  # dostosuj URL
+
+    return render(request, 'import_apartment.html')
 
 
 def dashboard(request):
