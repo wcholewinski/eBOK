@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Zmień status{% endblock %}
+{% block content %}
+<h2>Zmień status zgłoszenia</h2>
+<p><strong>{{ ticket.title }}</strong><br/>{{ ticket.description }}</p>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn btn-success" type="submit">Zapisz</button>
+  <a href="{% url 'admin_tickets' %}" class="btn btn-secondary">Anuluj</a>
+</form>
+{% endblock %}

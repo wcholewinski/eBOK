@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Nowe zgłoszenie{% endblock %}
+{% block content %}
+<h2>Dodaj zgłoszenie</h2>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn btn-success" type="submit">Zgłoś</button>
+  <a href="{% url 'tickets' %}" class="btn btn-secondary">Anuluj</a>
+</form>
+{% endblock %}

@@ -1,13 +1,11 @@
-<!DOCTYPE html>
-<html>
-<head><title>{{ is_edit|yesno:"Edytuj płatność,Dodaj płatność" }}</title></head>
-<body>
-  <h2>{{ is_edit|yesno:"Edytuj płatność","Dodaj płatność" }}</h2>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Zapisz</button>
-  </form>
-  <p><a href="{% url 'admin_payments' %}">Anuluj</a></p>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ is_edit|yesno:"Edytuj płatność,Dodaj płatność" }}{% endblock %}
+{% block content %}
+<h2>{{ is_edit|yesno:"Edytuj płatność","Dodaj płatność" }}</h2>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn btn-success" type="submit">Zapisz</button>
+  <a href="{% url 'admin_payments' %}" class="btn btn-secondary">Anuluj</a>
+</form>
+{% endblock %}

@@ -1,7 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Apartment, Tenant, Payment
-
+from .models import Apartment, Tenant, Payment, Ticket
 
 class ApartmentForm(forms.ModelForm):
     class Meta:
@@ -17,7 +16,6 @@ class TenantForm(forms.ModelForm):
         fields = ['apartment', 'num_occupants']
 
     def save(self, commit=True):
-        # tworzymy usera i tenant razem
         user = User.objects.create_user(
             username=self.cleaned_data['username'],
             password=self.cleaned_data['password']
@@ -32,9 +30,18 @@ class PaymentForm(forms.ModelForm):
     class Meta:
         model = Payment
         fields = ['tenant', 'date', 'amount', 'type', 'status']
-        widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'}),
-        }
+        widgets = {'date': forms.DateInput(attrs={'type': 'date'}),}
 
 class CSVImportForm(forms.Form):
     csv_file = forms.FileField(label="Plik CSV z danymi mieszkań")
+
+class TicketForm(forms.ModelForm):
+    class Meta:
+        model = Ticket
+        fields = ['title', 'description']
+        widgets = {'description': forms.Textarea(attrs={'rows': 4}),}
+
+class TicketStatusForm(forms.ModelForm):
+    class Meta:
+        model = Ticket
+        fields = ['status']

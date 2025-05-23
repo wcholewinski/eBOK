@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Twoje zgłoszenia{% endblock %}
+{% block content %}
+<h2>Zgłoszenia serwisowe</h2>
+<a href="{% url 'ticket_add' %}" class="btn btn-sm btn-primary mb-3">Nowe zgłoszenie</a>
+<ul class="list-group">
+  {% for t in tickets %}
+  <li class="list-group-item">
+    [{{ t.get_status_display }}] {{ t.title }} – {{ t.created_at|date:"Y-m-d H:i" }}
+  </li>
+  {% empty %}
+  <li class="list-group-item">Brak zgłoszeń</li>
+  {% endfor %}
+</ul>
+{% endblock %}
