@@ -26,21 +26,45 @@ class Tenant(models.Model):
 
 class Payment(models.Model):
     PAYMENT_TYPES = [
-        ('rent', 'Czynsz'),
+        ('rent',    'Czynsz'),
         ('garbage', 'Śmieci'),
-        ('water', 'Woda'),
-        ('gas', 'Gaz'),
+        ('water',   'Woda'),
+        ('gas',     'Gaz'),
     ]
     STATUS_CHOICES = [
         ('pending', 'Oczekujące'),
-        ('paid', 'Opłacone'),
+        ('paid',    'Opłacone'),
     ]
 
-    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE)
-    date = models.DateField(default=timezone.now, help_text="Data terminu płatności")
-    amount = models.DecimalField(max_digits=5, decimal_places=2)
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='payments')
+    date = models.DateField(default=timezone.now, help_text="Termin płatności")
+    amount = models.DecimalField(max_digits=8, decimal_places=2)
     type = models.CharField(max_length=10, choices=PAYMENT_TYPES)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
 
+    class Meta:
+        ordering = ['-date']
+
     def __str__(self):
-        return f"{self.get_type_display()} – {self.amount} zł ({self.get_status_display()})"
+        return f"{self.get_type_display()}: {self.amount} zł – {self.get_status_display()}"
+
+
+class Ticket(models.Model):
+    STATUS = [
+        ('new',        'Nowe'),
+        ('in_progress','W trakcie'),
+        ('closed',     'Zamknięte'),
+    ]
+
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='tickets')
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    status = models.CharField(max_length=15, choices=STATUS, default='new')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.get_status_display()}] {self.title}"

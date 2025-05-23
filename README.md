@@ -20,7 +20,7 @@ Zapewnia dwa panele dostępu:
 - Funkcjonalności AI i ML
 
 ## Założenia projektu
-Ma służyć jako podstawa do dalszego rozwoju i rozbudowy systemu zarządzania kamienicą.
+Ma służyć jako podstawa do dalszego rozwoju i rozbudowy systemu zarządzania .
 
 ---
 
