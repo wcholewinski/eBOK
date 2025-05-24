@@ -1,4 +1,4 @@
-# eBOK — Elektroniczny Biuletyn Obsługi Kamienicy
+# eBOK — Elektroniczne Biuro Obsługi Klienta
 
 ## Opis projektu
 Aplikacja webowa stworzona w Django, służąca do zarządzania budynkiem wielorodzinnym.  
