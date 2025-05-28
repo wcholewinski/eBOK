@@ -1,25 +1,23 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Import mieszkań z CSV</title>
-</head>
-<body>
-  <h2>Import mieszkań z pliku CSV</h2>
+{% extends "base.html" %}
 
-  {% if messages %}
-    <ul>
-      {% for msg in messages %}
-        <li>{{ msg }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
+{% block title %}Import mieszkań z CSV{% endblock %}
 
-  <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Importuj</button>
-  </form>
+{% block content %}
+<h2>Import mieszkań z pliku CSV</h2>
 
-  <p><a href="{% url 'admin_dashboard' %}">Powrót do panelu</a></p>
-</body>
-</html>
+{% if messages %}
+  <ul>
+    {% for msg in messages %}
+      <li>{{ msg }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Importuj</button>
+</form>
+
+<p><a href="{% url 'admin_dashboard' %}">Powrót do panelu</a></p>
+{% endblock %}

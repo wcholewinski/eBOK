@@ -1,27 +1,25 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Panel Lokatora</title>
-</head>
-<body>
-    <h2>Witaj {{ request.user.username }}</h2>
+{% extends "base.html" %}
 
-    {% if tenant %}
-        <h3>Twoje mieszkanie:</h3>
-        <ul>
-            <li>Numer: {{ tenant.apartment.number }}</li>
-            <li>Piętro: {{ tenant.apartment.floor }}</li>
-            <li>Powierzchnia: {{ tenant.apartment.area }} m²</li>
-            <li>Czynsz: {{ tenant.apartment.rent }} zł</li>
-            <li>Opłata za śmieci: {{ tenant.apartment.garbage_fee }} zł</li>
-            <li>Opłata za wodę: {{ tenant.apartment.water_fee }} zł</li>
-            <li>Opłata za gaz: {{ tenant.apartment.gas_fee }} zł</li>
-            <li>Liczba mieszkańców: {{ tenant.num_occupants }}</li>
-        </ul>
-    {% else %}
-        <p>Jesteś administratorem.</p>
-    {% endif %}
+{% block title %}Panel Lokatora{% endblock %}
 
-    <p><a href="{% url 'logout' %}">Wyloguj</a></p>
-</body>
-</html>
+{% block content %}
+<h2>Witaj {{ request.user.get_full_name|default:request.user.username }}</h2>
+
+{% if tenant %}
+    <h3>Twoje mieszkanie:</h3>
+    <ul>
+        <li><strong>Numer:</strong> {{ tenant.apartment.number }}</li>
+        <li><strong>Piętro:</strong> {{ tenant.apartment.floor }}</li>
+        <li><strong>Powierzchnia:</strong> {{ tenant.apartment.area }} m²</li>
+        <li><strong>Czynsz:</strong> {{ tenant.apartment.rent }} zł</li>
+        <li><strong>Opłata za śmieci:</strong> {{ tenant.apartment.garbage_fee }} zł</li>
+        <li><strong>Opłata za wodę:</strong> {{ tenant.apartment.water_fee }} zł</li>
+        <li><strong>Opłata za gaz:</strong> {{ tenant.apartment.gas_fee }} zł</li>
+        <li><strong>Liczba mieszkańców:</strong> {{ tenant.num_occupants }}</li>
+    </ul>
+{% else %}
+    <p>Jesteś administratorem.</p>
+{% endif %}
+
+<p><a href="{% url 'app:logout' %}">Wyloguj</a></p>
+{% endblock %}

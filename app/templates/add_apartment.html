@@ -1,7 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Dodaj mieszkanie{% endblock %}
+
+{% block content %}
 <h2>Dodaj mieszkanie</h2>
+
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit">Zapisz</button>
 </form>
-<a href="{% url 'admin_dashboard' %}">Powrót</a>
+
+<p><a href="{% url 'admin_dashboard' %}">Powrót do panelu administratora</a></p>
+{% endblock %}

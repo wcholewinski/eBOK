@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ is_edit|yesno:"Edytuj płatność,Dodaj płatność" }}{% endblock %}
 {% block content %}
-<h2>{{ is_edit|yesno:"Edytuj płatność","Dodaj płatność" }}</h2>
+<h2>{{ is_edit|yesno:"Edytuj płatność,Dodaj płatność" }}</h2>
 <form method="post">
   {% csrf_token %}
   {{ form.as_p }}

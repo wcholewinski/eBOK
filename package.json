@@ -1,0 +1,20 @@
+{
+  "name": "ebok",
+  "version": "1.0.0",
+  "description": "## Opis projektu Aplikacja webowa stworzona w Django, służąca do zarządzania budynkiem wielorodzinnym.   Zapewnia dwa panele dostępu:   - **Panel administratora** (właściciel budynku) — do zarządzania mieszkaniami i mieszkańcami.   - **Panel lokatora** — pozwala lokatorowi na podgląd danych dotyczących jego mieszkania i opłat.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wcholewinski/eBOK.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wcholewinski/eBOK/issues"
+  },
+  "homepage": "https://github.com/wcholewinski/eBOK#readme"
+}
