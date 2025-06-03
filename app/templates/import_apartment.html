@@ -3,21 +3,27 @@
 {% block title %}Import mieszkań z CSV{% endblock %}
 
 {% block content %}
-<h2>Import mieszkań z pliku CSV</h2>
+<div class="container py-4">
+  <h2 class="mb-4">Import mieszkań z pliku CSV</h2>
 
-{% if messages %}
-  <ul>
-    {% for msg in messages %}
-      <li>{{ msg }}</li>
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}" role="alert">{{ message }}</div>
     {% endfor %}
-  </ul>
-{% endif %}
+  {% endif %}
 
-<form method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Importuj</button>
-</form>
-
-<p><a href="{% url 'admin_dashboard' %}">Powrót do panelu</a></p>
+  <form method="post" enctype="multipart/form-data" class="mb-4">
+    {% csrf_token %}
+    <div class="mb-3">
+      {{ form.csv_file.label_tag }}
+      {{ form.csv_file }}
+      {% if form.csv_file.help_text %}
+        <div class="form-text">{{ form.csv_file.help_text }}</div>
+      {% endif %}
+      {{ form.csv_file.errors }}
+    </div>
+    <button type="submit" class="btn btn-primary">Importuj</button>
+    <a href="{% url 'admin:dashboard' %}" class="btn btn-secondary ms-2">Anuluj</a>
+  </form>
+</div>
 {% endblock %}

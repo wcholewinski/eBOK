@@ -1,11 +1,32 @@
 {% extends "base.html" %}
+
 {% block title %}{{ is_edit|yesno:"Edytuj płatność,Dodaj płatność" }}{% endblock %}
+
 {% block content %}
-<h2>{{ is_edit|yesno:"Edytuj płatność,Dodaj płatność" }}</h2>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button class="btn btn-success" type="submit">Zapisz</button>
-  <a href="{% url 'admin_payments' %}" class="btn btn-secondary">Anuluj</a>
-</form>
+<div class="container py-4" style="max-width: 600px;">
+  <h2 class="mb-4">{{ is_edit|yesno:"Edytuj płatność,Dodaj płatność" }}</h2>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="mb-3">
+        {{ field.label_tag }}
+        {{ field }}
+        {% if field.help_text %}
+          <div class="form-text">{{ field.help_text }}</div>
+        {% endif %}
+        {% if field.errors %}
+          <div class="invalid-feedback d-block">
+            {{ field.errors|striptags }}
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-success">
+        {{ is_edit|yesno:"Zapisz,Zapisz" }}
+      </button>
+      <a href="{% url 'app:admin_payments' %}" class="btn btn-secondary">Anuluj</a>
+    </div>
+  </form>
+</div>
 {% endblock %}

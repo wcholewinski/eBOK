@@ -1,12 +1,37 @@
 {% extends "base.html" %}
+
 {% block title %}Zmień status{% endblock %}
+
 {% block content %}
-<h2>Zmień status zgłoszenia</h2>
-<p><strong>{{ ticket.title }}</strong><br/>{{ ticket.description }}</p>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button class="btn btn-success" type="submit">Zapisz</button>
-  <a href="{% url 'admin_tickets' %}" class="btn btn-secondary">Anuluj</a>
-</form>
+<div class="container py-4" style="max-width: 600px;">
+  <h2 class="mb-4">Zmień status zgłoszenia</h2>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">{{ ticket.title }}</h5>
+      <p class="card-text">{{ ticket.description }}</p>
+    </div>
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="mb-3">
+        {{ field.label_tag }}
+        {{ field }}
+        {% if field.help_text %}
+          <div class="form-text">{{ field.help_text }}</div>
+        {% endif %}
+        {% if field.errors %}
+          <div class="invalid-feedback d-block">{{ field.errors|striptags }}</div>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-success">Zapisz</button>
+      <a href="{% url 'app:admin:tickets' %}" class="btn btn-secondary">Anuluj</a>
+    </div>
+  </form>
+</div>
 {% endblock %}

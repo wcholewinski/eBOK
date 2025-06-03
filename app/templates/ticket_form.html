@@ -1,11 +1,28 @@
 {% extends "base.html" %}
+
 {% block title %}Nowe zgłoszenie{% endblock %}
+
 {% block content %}
-<h2>Dodaj zgłoszenie</h2>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button class="btn btn-success" type="submit">Zgłoś</button>
-  <a href="{% url 'tickets' %}" class="btn btn-secondary">Anuluj</a>
-</form>
+<div class="container py-4" style="max-width: 600px;">
+  <h2 class="mb-4">Nowe zgłoszenie</h2>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="mb-3">
+        {{ field.label_tag }}
+        {{ field }}
+        {% if field.help_text %}
+          <div class="form-text">{{ field.help_text }}</div>
+        {% endif %}
+        {% if field.errors %}
+          <div class="invalid-feedback d-block">{{ field.errors|striptags }}</div>
+        {% endif %}
+      </div>
+    {% endfor %}
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-success">Zgłoś</button>
+      <a href="{% url 'app:user_tickets' %}" class="btn btn-secondary">Anuluj</a>
+    </div>
+  </form>
+</div>
 {% endblock %}

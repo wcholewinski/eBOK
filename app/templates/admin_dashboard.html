@@ -3,53 +3,107 @@
 {% block title %}Panel Administratora{% endblock %}
 
 {% block content %}
-<h2>Panel Administratora – Podsumowanie mieszkań</h2>
+<h2>Panel Administratora</h2>
 
-<table border="1" cellpadding="5" cellspacing="0">
-    <thead>
-        <tr>
-            <th>Numer</th>
-            <th>Piętro</th>
-            <th>Powierzchnia (m²)</th>
-            <th>Czynsz (zł)</th>
-            <th>Śmieci (zł)</th>
-            <th>Woda (zł)</th>
-            <th>Gaz (zł)</th>
-            <th>Najemca</th>
-            <th>Liczba osób</th>
-            <th>Akcje</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for tenant in tenants %}
-            <tr>
-                <td>{{ tenant.apartment.number }}</td>
-                <td>{{ tenant.apartment.floor }}</td>
-                <td>{{ tenant.apartment.area }}</td>
-                <td>{{ tenant.apartment.rent }}</td>
-                <td>{{ tenant.apartment.garbage_fee }}</td>
-                <td>{{ tenant.apartment.water_fee }}</td>
-                <td>{{ tenant.apartment.gas_fee }}</td>
-                <td>{{ tenant.user.get_full_name }} ({{ tenant.user.username }})</td>
-                <td>{{ tenant.num_occupants }}</td>
-                <td>
-                    <a href="/admin/app/apartment/{{ tenant.apartment.id }}/change/">Edytuj mieszkanie</a><br>
-                    <a href="{% url 'add_tenant' %}">Dodaj lokatora</a>
-                </td>
-            </tr>
-        {% empty %}
-            <tr>
-                <td colspan="10">Brak lokatorów do wyświetlenia.</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Mieszkania</h5>
+                <div>
+                    <a href="{% url 'app:admin_add_apartment' %}" class="btn btn-sm btn-primary">Dodaj</a>
+                    <a href="{% url 'app:export_apartment_csv' %}" class="btn btn-sm btn-secondary">Eksport CSV</a>
+                    <a href="{% url 'app:import_apartment_csv' %}" class="btn btn-sm btn-secondary">Import CSV</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Numer</th>
+                            <th>Piętro</th>
+                            <th>Powierzchnia</th>
+                            <th>Czynsz</th>
+                            <th>Akcje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for apartment in apartments %}
+                        <tr>
+                            <td>{{ apartment.number }}</td>
+                            <td>{{ apartment.floor }}</td>
+                            <td>{{ apartment.area }} m²</td>
+                            <td>{{ apartment.rent }} zł</td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-outline-primary">Edytuj</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">Brak mieszkań w bazie</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-<p>
-    <a href="{% url 'add_apartment' %}">➕ Dodaj mieszkanie</a> |
-    <a href="{% url 'add_tenant' %}">➕ Dodaj lokatora</a> |
-    <a href="{% url 'import_mieszkania' %}">📥 Importuj mieszkania z CSV</a>
-</p>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Lokatorzy</h5>
+                <a href="{% url 'app:admin_add_tenant' %}" class="btn btn-sm btn-primary">Dodaj</a>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Użytkownik</th>
+                            <th>Mieszkanie</th>
+                            <th>Liczba osób</th>
+                            <th>Akcje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tenant in tenants %}
+                        <tr>
+                            <td>{{ tenant.user.username }}</td>
+                            <td>{{ tenant.apartment.number }}</td>
+                            <td>{{ tenant.num_occupants }}</td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-outline-primary">Edytuj</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center">Brak lokatorów w bazie</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-<p><a href="{% url 'logout' %}">Wyloguj się</a></p>
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Płatności</h5>
+                <a href="{% url 'app:admin_payments' %}" class="btn btn-sm btn-primary">Zarządzaj</a>
+            </div>
+            <div class="card-body">
+                <p>Zarządzaj płatnościami lokatorów.</p>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Zgłoszenia</h5>
+                <a href="{% url 'app:admin_tickets' %}" class="btn btn-sm btn-primary">Zarządzaj</a>
+            </div>
+            <div class="card-body">
+                <p>Zarządzaj zgłoszeniami od lokatorów.</p>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

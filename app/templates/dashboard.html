@@ -1,25 +1,28 @@
+{# dashboard.html #}
 {% extends "base.html" %}
 
 {% block title %}Panel Lokatora{% endblock %}
 
 {% block content %}
-<h2>Witaj {{ request.user.get_full_name|default:request.user.username }}</h2>
+  <div class="container py-4">
+    <h2 class="mb-4">Witaj {{ request.user.get_full_name|default:request.user.username }}</h2>
 
-{% if tenant %}
-    <h3>Twoje mieszkanie:</h3>
-    <ul>
-        <li><strong>Numer:</strong> {{ tenant.apartment.number }}</li>
-        <li><strong>Piętro:</strong> {{ tenant.apartment.floor }}</li>
-        <li><strong>Powierzchnia:</strong> {{ tenant.apartment.area }} m²</li>
-        <li><strong>Czynsz:</strong> {{ tenant.apartment.rent }} zł</li>
-        <li><strong>Opłata za śmieci:</strong> {{ tenant.apartment.garbage_fee }} zł</li>
-        <li><strong>Opłata za wodę:</strong> {{ tenant.apartment.water_fee }} zł</li>
-        <li><strong>Opłata za gaz:</strong> {{ tenant.apartment.gas_fee }} zł</li>
-        <li><strong>Liczba mieszkańców:</strong> {{ tenant.num_occupants }}</li>
-    </ul>
-{% else %}
-    <p>Jesteś administratorem.</p>
-{% endif %}
+    {% if tenant %}
+      {% with apt=tenant.apartment %}
+        <h3 class="mb-3">Twoje mieszkanie:</h3>
+        <dl class="row">
+            {% for label, field in fields %}
+                <dt class="col-sm-3 fw-bold">{{ label }}</dt>
+                <dd class="col-sm-9">{{ field }}</dd>
+            {% endfor %}
+        </dl>
+      {% endwith %}
+    {% else %}
+      <div class="alert alert-info">Jesteś administratorem.</div>
+    {% endif %}
 
-<p><a href="{% url 'app:logout' %}">Wyloguj</a></p>
+    <a class="btn btn-outline-secondary mt-3" href="{% url 'app:logout' %}">
+      Wyloguj
+    </a>
+  </div>
 {% endblock %}

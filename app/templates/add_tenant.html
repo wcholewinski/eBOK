@@ -3,13 +3,16 @@
 {% block title %}Dodaj lokatora{% endblock %}
 
 {% block content %}
-<h2>Dodaj lokatora</h2>
+<div class="container py-4">
+  <h2 class="mb-4">Dodaj lokatora</h2>
 
-<form method="post">
+  <form method="post" class="mb-3">
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Utwórz lokatora</button>
-</form>
-
-<p><a href="{% url 'admin_dashboard' %}">Powrót do panelu administratora</a></p>
+    <div class="mb-3">
+      {{ form.as_p }}
+    </div>
+    <button type="submit" class="btn btn-success">Utwórz lokatora</button>
+    <a href="{% url 'app:admin_dashboard' %}" class="btn btn-secondary ms-2">Anuluj</a>
+  </form>
+</div>
 {% endblock %}
