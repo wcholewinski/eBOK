@@ -35,7 +35,7 @@
                             <td>{{ apartment.area }} m²</td>
                             <td>{{ apartment.rent }} zł</td>
                             <td>
-                                <a href="#" class="btn btn-sm btn-outline-primary">Edytuj</a>
+                                <a href="{% url 'app:admin_edit_apartment' apartment.pk %}" class="btn btn-sm btn-outline-primary">Edytuj</a>
                             </td>
                         </tr>
                         {% empty %}

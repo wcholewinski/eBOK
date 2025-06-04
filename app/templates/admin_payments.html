@@ -7,7 +7,7 @@
   <h2 class="mb-4">Zarządzanie płatnościami</h2>
   
   <div class="mb-3">
-    <a href="{% url 'app:payment_form' %}" class="btn btn-primary">Dodaj płatność</a>
+    <a href="{% url 'app:admin_add_payment' %}" class="btn btn-primary">Dodaj płatność</a>
   </div>
   
   <div class="card">
@@ -37,7 +37,7 @@
             <td>{{ payment.get_type_display }}</td>
             <td>{{ payment.get_status_display }}</td>
             <td>
-              <a href="{% url 'app:payment_form' payment.id %}" class="btn btn-sm btn-outline-primary">Edytuj</a>
+              <a href="{% url 'app:admin_edit_payment' payment.id %}" class="btn btn-sm btn-outline-primary">Edytuj</a>
             </td>
           </tr>
           {% empty %}

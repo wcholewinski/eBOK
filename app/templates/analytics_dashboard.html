@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard Analityczny{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4">Dashboard Analityczny eBOK</h2>
+
+    <!-- KPI Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5>Mieszkania</h5>
+                    <h3>{{ total_apartments }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5>Aktywne sensory</h5>
+                    <h3>{{ active_sensors }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5>Alerty</h5>
+                    <h3>{{ pending_alerts }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5>Efektywność</h5>
+                    <h3>{{ efficiency_score }}%</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Przewidywania -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Przewidywane zużycie wody</h5>
+                </div>
+                <div class="card-body">
+                    <div id="predictions-chart"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Alerty systemu</h5>
+                </div>
+                <div class="card-body">
+                    <p>Funkcjonalność alertów</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Wykres przewidywań
+{% if predictions %}
+var predictions_data = [
+    {
+        x: [{% for pred in predictions %}'{{ pred.month }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        y: [{% for pred in predictions %}{{ pred.predicted_consumption }}{% if not forloop.last %},{% endif %}{% endfor %}],
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Przewidywane zużycie'
+    }
+];
+
+Plotly.newPlot('predictions-chart', predictions_data, {
+    title: 'Prognoza zużycia wody (m³)',
+    xaxis: { title: 'Miesiąc' },
+    yaxis: { title: 'Zużycie (m³)' }
+});
+{% endif %}
+</script>
+{% endblock %}

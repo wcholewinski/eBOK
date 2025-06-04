@@ -1,11 +1,14 @@
+import datetime
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.contrib import messages
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse
 from django.contrib.auth import logout
+from .ml_analysis import PredictiveAnalysis
+
 import csv
 
-from .models import Apartment, Tenant, Payment, Ticket
+from .models import Apartment, Tenant, Payment, Ticket, Sensor, BuildingAlert, UtilityConsumption
 from .forms import ApartmentForm, TenantForm, PaymentForm, CSVImportForm, TicketForm
 from django.shortcuts import redirect
 
@@ -60,6 +63,25 @@ def add_tenant(request):
         'apartments': apartments
     })
 
+
+@admin_required
+def edit_apartment(request, pk):
+    apartment = get_object_or_404(Apartment, pk=pk)
+    if request.method == "POST":
+        form = ApartmentForm(request.POST, instance=apartment)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Mieszkanie {apartment.number} zostało zaktualizowane")
+            return redirect('app:admin_dashboard')
+        else:
+            messages.error(request, "Formularz zawiera błędy")
+    else:
+        form = ApartmentForm(instance=apartment)
+    
+    return render(request, 'edit_apartment.html', {
+        'form': form, 
+        'apartment': apartment
+    })
 
 # ─── PŁATNOŚCI ───────────────────────────────────────────
 @login_required
@@ -215,3 +237,51 @@ def redirect_to_admin_tickets(request):
 
 def redirect_to_add_tenant(request):
     return redirect('app:admin_add_tenant')
+
+
+
+@admin_required
+def analytics_dashboard(request):
+    """Dashboard z analizami predykcyjnymi"""
+    
+    ml_analyzer = PredictiveAnalysis()
+    
+    # Podstawowe statystyki
+    total_apartments = Apartment.objects.count()
+    active_sensors = Sensor.objects.filter(is_active=True).count()
+    pending_alerts = BuildingAlert.objects.filter(is_resolved=False).count()
+    efficiency_score = ml_analyzer.building_efficiency_score()
+    
+    # Przewidywania dla przykładowego mieszkania
+    sample_apartment = Apartment.objects.first()
+    predictions = None
+    if sample_apartment:
+        predictions = ml_analyzer.predict_utility_consumption(
+            sample_apartment.id, 'water', 6
+        )
+    
+    context = {
+        'total_apartments': total_apartments,
+        'active_sensors': active_sensors,
+        'pending_alerts': pending_alerts,
+        'efficiency_score': round(efficiency_score, 1),
+        'predictions': predictions,
+    }
+    
+    return render(request, 'analytics_dashboard.html', context)
+
+@admin_required
+def consumption_trends(request):
+    """Analiza trendów zużycia"""
+    
+    # Pobierz dane ostatnich 12 miesięcy
+    months_data = UtilityConsumption.objects.filter(
+        month__gte=datetime.now() - timedelta(days=365)
+    ).values('month', 'utility_type').annotate(
+        total_consumption=models.Sum('consumption'),
+        total_cost=models.Sum('total_cost')
+    ).order_by('month')
+    
+    return render(request, 'consumption_trends.html', {
+        'months_data': months_data
+    })

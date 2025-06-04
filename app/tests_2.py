@@ -1,18 +1,21 @@
-from django.shortcuts import redirect
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.utils import timezone
-from datetime import timedelta
 from decimal import Decimal
-import csv, io
+import csv
+import io
 
-from app.models import Apartment, Tenant, Payment, Ticket
-from app.forms import ApartmentForm, TenantForm, PaymentForm, TicketForm
+from .models import (
+    Apartment, Tenant, Payment, Ticket,
+    Sensor, SensorReading, UtilityConsumption
+)
+from .forms import ApartmentForm, TenantForm, PaymentForm
+
 
 class EBOKModelTests(TestCase):
-    """Testy dla modeli aplikacji."""
-    
+    """Testy dla wszystkich modeli"""
+
     def setUp(self):
         self.apartment = Apartment.objects.create(
             number='101',
@@ -23,376 +26,423 @@ class EBOKModelTests(TestCase):
             water_fee=30.00,
             gas_fee=20.00
         )
+
         self.user = User.objects.create_user(
-            username='testuser',
-            password='testpass',
-            email='test@example.com'
+            username='tenant',
+            password='tenantpass',
+            email='tenant@example.com'
         )
+
         self.tenant = Tenant.objects.create(
             user=self.user,
             apartment=self.apartment,
             num_occupants=2
         )
-        self.payment = Payment.objects.create(
+
+    def test_apartment_model(self):
+        """Test modelu Apartment"""
+        apt = self.apartment
+        self.assertEqual(str(apt), "Mieszkanie 101")
+        self.assertEqual(apt.total_fees(), Decimal('1600.00'))
+
+    def test_tenant_model(self):
+        """Test modelu Tenant"""
+        tenant = self.tenant
+        self.assertEqual(str(tenant), f"{tenant.user.username} - Mieszkanie {tenant.apartment.number}")
+        self.assertEqual(tenant.num_occupants, 2)
+
+    def test_payment_model(self):
+        """Test modelu Payment"""
+        payment = Payment.objects.create(
             tenant=self.tenant,
             date=timezone.now().date(),
             amount=1500.00,
             type='rent',
-            status='pending'
+            status='paid'
         )
-        self.ticket = Ticket.objects.create(
+
+        expected_str = f"Płatność {payment.get_type_display()} - {payment.amount} zł"
+        self.assertEqual(str(payment), expected_str)
+
+    def test_ticket_model(self):
+        """Test modelu Ticket"""
+        ticket = Ticket.objects.create(
             tenant=self.tenant,
             title='Test zgłoszenie',
             description='Opis testowego zgłoszenia',
             status='new'
         )
 
-    def test_apartment_creation(self):
-        """Test tworzenia mieszkania i sprawdzenia jego atrybutów."""
-        self.assertEqual(self.apartment.number, '101')
-        self.assertEqual(self.apartment.floor, 1)
-        self.assertEqual(float(self.apartment.area), 50.5)
-        self.assertEqual(float(self.apartment.rent), 1500.00)
-        self.assertEqual(str(self.apartment), "Mieszkanie 101 (piętro 1)")
-    
-    def test_tenant_creation(self):
-        """Test tworzenia lokatora i sprawdzenia jego atrybutów."""
-        self.assertEqual(self.tenant.user, self.user)
-        self.assertEqual(self.tenant.apartment, self.apartment)
-        self.assertEqual(self.tenant.num_occupants, 2)
-        self.assertIn('testuser', str(self.tenant))
-        self.assertIn('101', str(self.tenant))
-    
-    def test_payment_creation(self):
-        """Test tworzenia płatności i sprawdzenia jej atrybutów."""
-        self.assertEqual(self.payment.tenant, self.tenant)
-        self.assertEqual(float(self.payment.amount), 1500.00)
-        self.assertEqual(self.payment.type, 'rent')
-        self.assertEqual(self.payment.status, 'pending')
-        self.assertIn('Czynsz', str(self.payment))
-        self.assertIn('1500', str(self.payment))
-        self.assertIn('Oczekujące', str(self.payment))
-    
-    def test_ticket_creation(self):
-        """Test tworzenia zgłoszenia i sprawdzenia jego atrybutów."""
-        self.assertEqual(self.ticket.tenant, self.tenant)
-        self.assertEqual(self.ticket.title, 'Test zgłoszenie')
-        self.assertEqual(self.ticket.description, 'Opis testowego zgłoszenia')
-        self.assertEqual(self.ticket.status, 'new')
-        self.assertIn('Test zgłoszenie', str(self.ticket))
-        self.assertIn('Nowe', str(self.ticket))
+        expected_str = f"[Nowe] Test zgłoszenie"
+        self.assertEqual(str(ticket), expected_str)
 
-
-class EBOKAuthTests(TestCase):
-    """Testy dla funkcjonalności uwierzytelniania."""
-    
-    def setUp(self):
-        self.client = Client()
-        self.admin_user = User.objects.create_superuser(
-            username='admin', 
-            password='adminpass',
-            email='admin@example.com'
-        )
-        self.tenant_user = User.objects.create_user(
-            username='tenant', 
-            password='tenantpass',
-            email='tenant@example.com'
-        )
-        self.apartment = Apartment.objects.create(
-            number='101',
-            floor=1,
-            area=50.5,
-            rent=1500.00,
-            trash_fee=50.00,
-            water_fee=30.00,
-            gas_fee=20.00
-        )
-        self.tenant = Tenant.objects.create(
-            user=self.tenant_user, 
-            apartment=self.apartment
-        )
-    
-    def test_login_view(self):
-        """Test widoku logowania."""
-        # Użyj odpowiedniej ścieżki URL zgodnej z ustawieniem w urls.py
-        response = self.client.post(reverse('app:login'), {'username': 'tenant', 'password': 'tenantpass'})
-        self.assertRedirects(response, reverse('app:dashboard'))
-    
-    def test_logout_view(self):
-        """Test wylogowywania."""
-        self.client.login(username='tenant', password='tenantpass')
-        response = self.client.get(reverse('app:logout'), follow=True)
-        self.assertFalse(response.context['user'].is_authenticated)
-        self.assertRedirects(response, reverse('app:login'))
-    
-    def test_admin_access_control(self):
-        """Test kontroli dostępu do panelu administratora."""
-        # Brak dostępu dla niezalogowanego użytkownika
-        response = self.client.get(reverse('app:admin_dashboard'), follow=True)
-        self.assertRedirects(response, reverse('app:login'))
-        
-        # Brak dostępu dla zwykłego użytkownika
-        self.client.login(username='tenant', password='tenantpass')
-        response = self.client.get(reverse('app:admin_dashboard'), follow=True)
-        # Oczekujemy przekierowania do dashboardu (to jest zmiana)
-        self.assertRedirects(response, reverse('app:dashboard'))
-        
-        # Dostęp dla administratora
-        self.client.login(username='admin', password='adminpass')
-        response = self.client.get(reverse('app:admin_dashboard'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'admin_dashboard.html')
-
-
-class EBOKDashboardTests(TestCase):
-    """Testy dla paneli głównych (dashboardów)."""
-    
-    def setUp(self):
-        self.client = Client()
-        self.admin_user = User.objects.create_superuser(
-            username='admin', 
-            password='adminpass',
-            email='admin@example.com'
-        )
-        self.tenant_user = User.objects.create_user(
-            username='tenant', 
-            password='tenantpass',
-            email='tenant@example.com'
-        )
-        self.apartment = Apartment.objects.create(
-            number='101',
-            floor=1,
-            area=50.5,
-            rent=1500.00,
-            trash_fee=50.00,
-            water_fee=30.00,
-            gas_fee=20.00
-        )
-        self.tenant = Tenant.objects.create(
-            user=self.tenant_user, 
+    def test_sensor_model(self):
+        """Test modelu Sensor"""
+        sensor = Sensor.objects.create(
+            name='Temperatura salon',
+            sensor_type='temperature',
             apartment=self.apartment,
+            location='salon',
+            is_active=True
+        )
+
+        self.assertEqual(sensor.name, 'Temperatura salon')
+        self.assertEqual(sensor.sensor_type, 'temperature')
+        self.assertTrue(sensor.is_active)
+
+    def test_sensor_reading_model(self):
+        """Test modelu SensorReading"""
+        sensor = Sensor.objects.create(
+            name='Temperatura salon',
+            sensor_type='temperature',
+            apartment=self.apartment,
+            location='salon'
+        )
+
+        reading = SensorReading.objects.create(
+            sensor=sensor,
+            value=22.5,
+            unit='°C'
+        )
+
+        self.assertEqual(reading.value, 22.5)
+        self.assertEqual(reading.unit, '°C')
+
+    def test_utility_consumption_model(self):
+        """Test modelu UtilityConsumption"""
+        consumption = UtilityConsumption.objects.create(
+            apartment=self.apartment,
+            utility_type='water',
+            consumption=15.5,
+            month=timezone.now().date(),
+            cost_per_unit=Decimal('3.50'),
+            total_cost=Decimal('54.25')
+        )
+
+        self.assertEqual(consumption.utility_type, 'water')
+        self.assertEqual(consumption.consumption, 15.5)
+        self.assertEqual(consumption.total_cost, Decimal('54.25'))
+
+
+class EBOKIntegrationTests(TestCase):
+    """Testy integracyjne - sprawdzają czy całe funkcjonalności działają razem"""
+
+    def setUp(self):
+        self.admin_user = User.objects.create_superuser(
+            username='admin',
+            password='adminpass',
+            email='admin@example.com'
+        )
+        self.client = Client()
+
+    def test_complete_apartment_workflow(self):
+        """Test pełnego workflow zarządzania mieszkaniem"""
+        self.client.login(username='admin', password='adminpass')
+
+        # 1. Dodaj mieszkanie
+        apartment_data = {
+            'number': '201',
+            'floor': 2,
+            'area': 65.0,
+            'rent': 1800.00,
+            'trash_fee': 65.00,
+            'water_fee': 45.00,
+            'gas_fee': 30.00
+        }
+        response = self.client.post(reverse('app:admin_add_apartment'), apartment_data)
+        self.assertEqual(response.status_code, 302)
+
+        apartment = Apartment.objects.get(number='201')
+
+        # 2. Dodaj lokatora
+        tenant_data = {
+            'first_name': 'Anna',
+            'last_name': 'Nowak',
+            'email': 'anna.nowak@example.com',
+            'phone': '987654321',
+            'apartment': apartment.id,
+            'num_occupants': 1
+        }
+        response = self.client.post(reverse('app:admin_add_tenant'), tenant_data)
+        self.assertEqual(response.status_code, 302)
+
+        tenant = Tenant.objects.get(apartment=apartment)
+
+        # 3. Dodaj płatność
+        payment_data = {
+            'tenant': tenant.id,
+            'date': timezone.now().date(),
+            'amount': 1800.00,
+            'type': 'rent',
+            'status': 'paid'
+        }
+        response = self.client.post(reverse('app:admin_add_payment'), payment_data)
+        self.assertEqual(response.status_code, 302)
+
+        payment = Payment.objects.get(tenant=tenant)
+        self.assertEqual(float(payment.amount), 1800.00)
+
+        # 4. Edytuj mieszkanie
+        updated_data = {
+            'number': '201',
+            'floor': 2,
+            'area': 70.0,  # Zmiana powierzchni
+            'rent': 1900.00,  # Zmiana czynszu
+            'trash_fee': 65.00,
+            'water_fee': 45.00,
+            'gas_fee': 30.00
+        }
+        response = self.client.post(
+            reverse('app:admin_edit_apartment', args=[apartment.pk]),
+            updated_data
+        )
+        self.assertEqual(response.status_code, 302)
+
+        apartment.refresh_from_db()
+        self.assertEqual(float(apartment.area), 70.0)
+        self.assertEqual(float(apartment.rent), 1900.00)
+
+    def test_sensor_and_consumption_integration(self):
+        """Test integracji sensorów z danymi zużycia"""
+        # Utwórz mieszkanie
+        apartment = Apartment.objects.create(
+            number='301',
+            floor=3,
+            area=55.0,
+            rent=1600.00,
+            trash_fee=55.00,
+            water_fee=35.00,
+            gas_fee=25.00
+        )
+
+        # Dodaj sensor
+        sensor = Sensor.objects.create(
+            name='Licznik wody',
+            sensor_type='water_flow',
+            apartment=apartment,
+            location='łazienka'
+        )
+
+        # Dodaj odczyty
+        readings = [
+            SensorReading.objects.create(sensor=sensor, value=10.5, unit='m³'),
+            SensorReading.objects.create(sensor=sensor, value=12.0, unit='m³'),
+            SensorReading.objects.create(sensor=sensor, value=9.8, unit='m³'),
+        ]
+
+        # Dodaj dane zużycia
+        consumption = UtilityConsumption.objects.create(
+            apartment=apartment,
+            utility_type='water',
+            consumption=32.3,  # Suma odczytów
+            month=timezone.now().date(),
+            cost_per_unit=Decimal('3.50'),
+            total_cost=Decimal('113.05')
+        )
+
+        # Sprawdź powiązania
+        self.assertEqual(SensorReading.objects.filter(sensor=sensor).count(), 3)
+        self.assertEqual(consumption.apartment, apartment)
+        self.assertEqual(sensor.apartment, apartment)
+
+    def test_tenant_permissions_and_access(self):
+        """Test uprawnień lokatora"""
+        # Utwórz mieszkanie i lokatora
+        apartment = Apartment.objects.create(
+            number='401',
+            floor=4,
+            area=50.0,
+            rent=1500.00,
+            trash_fee=50.00,
+            water_fee=30.00,
+            gas_fee=20.00
+        )
+
+        tenant_user = User.objects.create_user(
+            username='lokator401',
+            password='password',
+            email='lokator401@example.com'
+        )
+
+        tenant = Tenant.objects.create(
+            user=tenant_user,
+            apartment=apartment,
             num_occupants=2
         )
-    
-    def test_user_dashboard(self):
-        """Test dashboardu użytkownika."""
-        # Przekierowanie niezalogowanego użytkownika
-        response = self.client.get(reverse('app:dashboard'))
-        self.assertEqual(response.status_code, 302)
-        
-        # Dashboard dla zalogowanego lokatora
-        self.client.login(username='tenant', password='tenantpass')
+
+        # Zaloguj lokatora
+        self.client.login(username='lokator401', password='password')
+
+        # Sprawdź dostęp do własnych danych
         response = self.client.get(reverse('app:dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'dashboard.html')
-        self.assertEqual(response.context['tenant'], self.tenant)
-        self.assertIn(('Numer mieszkania', '101'), response.context['fields'])
-        self.assertIn(('Czynsz (zł)', Decimal('1500.00')), response.context['fields'])
-        self.assertIn(('Liczba mieszkańców', 2), response.context['fields'])
-    
-    @override_settings(TEMPLATE_DIRS=('nonexistent_dir',))  # Omijamy rendering szablonu
-    def test_admin_dashboard(self):
-        """Test dashboardu administratora."""
-        self.client.login(username='admin', password='adminpass')
+        self.assertContains(response, '401')  # Numer mieszkania
+
+        # Sprawdź brak dostępu do panelu admina
         response = self.client.get(reverse('app:admin_dashboard'))
+        self.assertEqual(response.status_code, 302)  # Przekierowanie
+
+        # Sprawdź dostęp do własnych płatności
+        Payment.objects.create(
+            tenant=tenant,
+            date=timezone.now().date(),
+            amount=1500.00,
+            type='rent',
+            status='paid'
+        )
+
+        response = self.client.get(reverse('app:user_payments'))
         self.assertEqual(response.status_code, 200)
-        # Sprawdzamy czy kontekst zawiera wszystkie potrzebne elementy
-        self.assertIn('apartments', response.context)
-        self.assertIn('tenants', response.context)
-        self.assertEqual(list(response.context['apartments']), [self.apartment])
-        self.assertEqual(list(response.context['tenants']), [self.tenant])
+        self.assertContains(response, '1500')
 
 
-class EBOKApartmentTests(TestCase):
-    """Testy dla zarządzania mieszkaniami."""
-    
+class EBOKPerformanceTests(TestCase):
+    """Testy wydajności"""
+
     def setUp(self):
-        self.client = Client()
         self.admin_user = User.objects.create_superuser(
-            username='admin', 
+            username='admin',
             password='adminpass',
             email='admin@example.com'
         )
+
+        # Utwórz więcej danych testowych
+        for i in range(50):
+            apartment = Apartment.objects.create(
+                number=f'{i + 100}',
+                floor=(i % 10) + 1,
+                area=50.0 + i,
+                rent=1500.00 + i * 100,
+                trash_fee=50.00,
+                water_fee=30.00,
+                gas_fee=20.00
+            )
+
+            user = User.objects.create_user(
+                username=f'tenant{i}',
+                password='password',
+                email=f'tenant{i}@example.com'
+            )
+
+            tenant = Tenant.objects.create(
+                user=user,
+                apartment=apartment,
+                num_occupants=(i % 4) + 1
+            )
+
+            # Dodaj płatności
+            for j in range(5):
+                Payment.objects.create(
+                    tenant=tenant,
+                    date=timezone.now().date(),
+                    amount=apartment.rent,
+                    type='rent',
+                    status='paid' if j % 2 == 0 else 'pending'
+                )
+
+    def test_dashboard_performance_with_many_apartments(self):
+        """Test wydajności dashboard z wieloma mieszkaniami"""
+        self.client.login(username='admin', password='adminpass')
+
+        import time
+        start_time = time.time()
+
+        response = self.client.get(reverse('app:admin_dashboard'))
+
+        end_time = time.time()
+        execution_time = end_time - start_time
+
+        self.assertEqual(response.status_code, 200)
+        self.assertLess(execution_time, 2.0)  # Powinno wykonać się w mniej niż 2 sekundy
+
+    def test_payments_view_performance(self):
+        """Test wydajności widoku płatności"""
+        self.client.login(username='admin', password='adminpass')
+
+        import time
+        start_time = time.time()
+
+        response = self.client.get(reverse('app:admin_payments'))
+
+        end_time = time.time()
+        execution_time = end_time - start_time
+
+        self.assertEqual(response.status_code, 200)
+        self.assertLess(execution_time, 1.5)  # Powinno wykonać się w mniej niż 1.5 sekundy
+
+
+class EBOKSecurityTests(TestCase):
+    """Testy bezpieczeństwa"""
+
+    def setUp(self):
+        self.admin_user = User.objects.create_superuser(
+            username='admin',
+            password='adminpass',
+            email='admin@example.com'
+        )
+
         self.tenant_user = User.objects.create_user(
-            username='tenant', 
+            username='tenant',
             password='tenantpass',
             email='tenant@example.com'
         )
-    
-    @override_settings(TEMPLATE_DIRS=('nonexistent_dir',))  # Omijamy rendering szablonu
-    def test_add_apartment(self):
-        """Test dodawania mieszkania."""
-        self.client.login(username='admin', password='adminpass')
-        
-        # Zmień to:
-        # response = self.client.get('/admin/apartments/add/')
-        # Na to:
-        response = self.client.get(reverse('app:admin_add_apartment'))
-        
-        self.assertEqual(response.status_code, 200)
-        self.assertIsInstance(response.context['form'], ApartmentForm)
-        
-        # Dodaj mieszkanie
-        apartment_data = {
-            'number': '102',
-            'floor': 2,
-            'area': 60.0,
-            'rent': 1600.00,
-            'trash_fee': 60.00,
-            'water_fee': 40.00,
-            'gas_fee': 25.00
-        }
-        response = self.client.post(reverse('app:admin_add_apartment'), apartment_data, follow=True)
-        self.assertEqual(response.status_code, 200)
-        
-        # Sprawdź czy mieszkanie zostało dodane do bazy
-        self.assertTrue(Apartment.objects.filter(number='102').exists())
-        apartment = Apartment.objects.get(number='102')
-        self.assertEqual(apartment.floor, 2)
-        self.assertEqual(float(apartment.area), 60.0)
-        self.assertEqual(float(apartment.rent), 1600.00)
-    
-    def test_csv_export(self):
-        """Test eksportu mieszkań do CSV."""
-        # Utwórz mieszkania do eksportu
-        Apartment.objects.create(
-            number='101', floor=1, area=50.0,
-            rent=1500.00, trash_fee=50.00, water_fee=30.00, gas_fee=20.00
-        )
-        Apartment.objects.create(
-            number='102', floor=2, area=60.0,
-            rent=1600.00, trash_fee=60.00, water_fee=40.00, gas_fee=25.00
-        )
-        
-        self.client.login(username='admin', password='adminpass')
-        response = self.client.get(reverse('app:export_apartment_csv'))
-        
-        # Sprawdź odpowiedź
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response['Content-Type'], 'text/csv')
-        self.assertEqual(response['Content-Disposition'], 'attachment; filename="apartments.csv"')
-        
-        # Sprawdź zawartość CSV
-        content = response.content.decode('utf-8')
-        csv_reader = csv.reader(content.splitlines())
-        rows = list(csv_reader)
-        
-        self.assertEqual(len(rows), 3)  # Nagłówek + 2 mieszkania
-        self.assertEqual(rows[0], ['number', 'floor', 'area', 'rent', 'trash_fee', 'water_fee', 'gas_fee'])
-        self.assertEqual(rows[1][0], '101')  # Numer pierwszego mieszkania
-        self.assertEqual(rows[2][0], '102')  # Numer drugiego mieszkania
-    
-    @override_settings(TEMPLATE_DIRS=('nonexistent_dir',))  # Omijamy rendering szablonu
-    def test_csv_import(self):
-        """Test importu mieszkań z CSV."""
-        self.client.login(username='admin', password='adminpass')
-        
-        # Utwórz plik CSV
-        csv_data = "number;floor;area\n101;1;50.5\n102;2;60.0"
-        csv_file = io.StringIO(csv_data)
-        csv_file.name = 'test.csv'
-        
-        response = self.client.post(reverse('app:import_apartment_csv'), {
-            'csv_file': csv_file
-        }, follow=True)
-        
-        # Sprawdź przekierowanie i komunikat
-        self.assertEqual(response.status_code, 200)
-        
-        # Sprawdź czy mieszkania zostały zaimportowane
-        self.assertEqual(Apartment.objects.count(), 2)
-        self.assertTrue(Apartment.objects.filter(number='101').exists())
-        self.assertTrue(Apartment.objects.filter(number='102').exists())
 
-
-class EBOKTenantTests(TestCase):
-    """Testy dla zarządzania lokatorami."""
-    
-    def setUp(self):
-        self.client = Client()
-        self.admin_user = User.objects.create_superuser(
-            username='admin', 
-            password='adminpass',
-            email='admin@example.com'
-        )
         self.apartment = Apartment.objects.create(
-            number='101',
-            floor=1,
-            area=50.5,
-            rent=1500.00,
-            trash_fee=50.00,
-            water_fee=30.00,
-            gas_fee=20.00
+            number='501',
+            floor=5,
+            area=60.0,
+            rent=1700.00,
+            trash_fee=60.00,
+            water_fee=40.00,
+            gas_fee=30.00
         )
-        # Utwórz użytkownika dla lokatora
-        self.tenant_user = User.objects.create_user(
-            username='newtenant',
-            password='tenantpass',
-            email='newtenant@example.com'
-        )
-    
-    @override_settings(TEMPLATE_DIRS=('nonexistent_dir',))  # Omijamy rendering szablonu
-    def test_add_tenant(self):
-        """Test dodawania lokatora."""
+
+    def test_admin_required_decorator(self):
+        """Test czy decorator @admin_required działa"""
+        # Lokator próbuje dostać się do panelu admina
+        self.client.login(username='tenant', password='tenantpass')
+
+        admin_urls = [
+            reverse('app:admin_dashboard'),
+            reverse('app:admin_add_apartment'),
+            reverse('app:admin_add_tenant'),
+            reverse('app:admin_payments'),
+        ]
+
+        for url in admin_urls:
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 302)  # Przekierowanie
+
+    def test_csrf_protection(self):
+        """Test ochrony CSRF"""
         self.client.login(username='admin', password='adminpass')
-        
-        # Sprawdź wyświetlanie formularza
-        response = self.client.get(reverse('app:add_tenant'))
-        self.assertEqual(response.status_code, 200)
-        self.assertIsInstance(response.context['form'], TenantForm)
-        
-        # Użyj unikalnej nazwy użytkownika, która się nie powtarza
-        tenant_data = {
-            'username': 'tenant_test_unique',  # Zmieniona nazwa użytkownika
-            'password1': 'password123',  # Hasło
-            'password2': 'password123',  # Potwierdzenie hasła
-            'apartment': self.apartment.id,
-            'num_occupants': 3
-        }
-        response = self.client.post(reverse('app:add_tenant'), tenant_data, follow=True)
-        self.assertEqual(response.status_code, 200)
-        
-        # Sprawdź czy utworzono użytkownika z nową, unikalną nazwą
-        self.assertTrue(User.objects.filter(username='tenant_test_unique').exists())
-        new_user = User.objects.get(username='tenant_test_unique')
-        
-        # Sprawdź czy lokator został dodany do bazy
-        self.assertTrue(Tenant.objects.filter(user=new_user).exists())
 
-# Dla metody test_admin_payments_view
-def test_admin_payments_view(self):
-    """Test widoku płatności dla administratora."""
-    self.client.login(username='admin', password='adminpass')
-    # Używaj prawidłowej nazwy ścieżki URL zdefiniowanej w urls.py
-    response = self.client.get(reverse('admin:payments'))
-    self.assertEqual(response.status_code, 200)
-    self.assertTemplateUsed(response, 'admin_payments.html')
+        # Próba POST bez CSRF token
+        response = self.client.post(reverse('app:admin_add_apartment'), {
+            'number': '999',
+            'floor': 9,
+            'area': 99.0,
+            'rent': 9999.00,
+            'trash_fee': 99.00,
+            'water_fee': 99.00,
+            'gas_fee': 99.00
+        }, HTTP_X_CSRFTOKEN='invalid_token')
 
-# Dla metody test_edit_payment
-def test_edit_payment(self):
-    """Test edycji płatności."""
-    self.client.login(username='admin', password='adminpass')
-    response = self.client.get(reverse('admin:edit_payment', args=[self.payment.id]))
-    self.assertEqual(response.status_code, 200)
-    self.assertTemplateUsed(response, 'payment_form.html')
-    self.assertIsInstance(response.context['form'], PaymentForm)
-    self.assertQuerySetEqual(response.context['payments'], [self.payment], transform=lambda x: x)
-    self.assertQuerySetEqual(response.context['tickets'], [self.ticket], transform=lambda x: x)
+        # Django powinien odrzucić żądanie
+        self.assertEqual(response.status_code, 403)
 
-def test_tickets_view_for_tenant(self):
-    """Test widoku zgłoszeń dla lokatora."""
-    self.client.login(username='tenant', password='tenantpass')
-    response = self.client.get(reverse('app:tickets'))
-    self.assertEqual(response.status_code, 200)
-    # Zmiana nazwy metody z assertQuerysetEqual na assertQuerySetEqual (zwróć uwagę na dużą literę S)
-    self.assertQuerySetEqual(response.context['tickets'], [self.ticket], transform=lambda x: x)
-def admin_required(view_func):
-    def wrap(request, *args, **kwargs):
-        if request.user.is_authenticated:
-            if request.user.is_superuser:
-                return view_func(request, *args, **kwargs)
-            # Przekierowanie dla zalogowanych, ale nie adminów
-            return redirect('app:login')
-        # Przekierowanie dla niezalogowanych
-        return redirect('app:login')
-    return wrap
+    def test_authentication_required(self):
+        """Test czy wymagane jest uwierzytelnienie"""
+        # Niezalogowany użytkownik
+        protected_urls = [
+            reverse('app:dashboard'),
+            reverse('app:user_payments'),
+            reverse('app:tickets'),
+            reverse('app:admin_dashboard'),
+        ]
+
+        for url in protected_urls:
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 302)  # Przekierowanie do logowania

@@ -172,3 +172,72 @@ class Ticket(models.Model):
 
     def __str__(self):
         return f"[{self.get_status_display()}] {self.title}"
+
+# app/models.py - dodaj nowe modele
+
+class Sensor(models.Model):
+    SENSOR_TYPES = [
+        ('temperature', 'Temperatura'),
+        ('humidity', 'Wilgotność'), 
+        ('water_flow', 'Przepływ wody'),
+        ('gas_consumption', 'Zużycie gazu'),
+        ('electricity', 'Zużycie energii'),
+        ('motion', 'Czujnik ruchu'),
+    ]
+    
+    name = models.CharField(max_length=100)
+    sensor_type = models.CharField(max_length=20, choices=SENSOR_TYPES)
+    apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE)
+    location = models.CharField(max_length=100)  # np. "kuchnia", "łazienka"
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class SensorReading(models.Model):
+    sensor = models.ForeignKey(Sensor, on_delete=models.CASCADE)
+    value = models.FloatField()
+    unit = models.CharField(max_length=20)  # °C, %, m³, kWh
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+class UtilityConsumption(models.Model):
+    UTILITY_TYPES = [
+        ('water', 'Woda'),
+        ('gas', 'Gaz'),
+        ('electricity', 'Prąd'),
+        ('heating', 'Ogrzewanie'),
+    ]
+    
+    apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE)
+    utility_type = models.CharField(max_length=20, choices=UTILITY_TYPES)
+    consumption = models.FloatField()
+    month = models.DateField()
+    cost_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
+    total_cost = models.DecimalField(max_digits=10, decimal_places=2)
+
+class MaintenanceRequest(models.Model):
+    PRIORITY_CHOICES = [
+        ('low', 'Niski'),
+        ('medium', 'Średni'),
+        ('high', 'Wysoki'),
+        ('emergency', 'Pilny'),
+    ]
+    
+    apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    
+class BuildingAlert(models.Model):
+    ALERT_TYPES = [
+        ('consumption_high', 'Wysokie zużycie'),
+        ('sensor_malfunction', 'Awaria sensora'),
+        ('maintenance_due', 'Wymagana konserwacja'),
+        ('payment_overdue', 'Zaległość w płatnościach'),
+    ]
+    
+    alert_type = models.CharField(max_length=30, choices=ALERT_TYPES)
+    message = models.TextField()
+    apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE, null=True)
+    is_resolved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)

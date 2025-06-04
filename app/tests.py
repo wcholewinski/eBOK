@@ -92,3 +92,20 @@ class EBOKTests(TestCase):
         self.assertEqual(response.status_code, 302)
         ticket = Ticket.objects.get(title='Problem z ogrzewaniem')
         self.assertEqual(ticket.tenant, self.tenant)
+@override_settings(TEMPLATE_DIRS=('nonexistent_dir',))  # Omijamy rendering szablonu
+def test_admin_payments_view(self):
+    """Test widoku płatności dla administratora."""
+    self.client.login(username='admin', password='adminpass')
+    response = self.client.get(reverse('app:admin_payments'))
+    self.assertEqual(response.status_code, 200)
+    # Sprawdzamy czy kontekst zawiera płatności
+    self.assertIn('payments', response.context)
+    self.assertEqual(list(response.context['payments']), [self.payment])
+
+@override_settings(TEMPLATE_DIRS=('nonexistent_dir',))  # Omijamy rendering szablonu
+def test_edit_payment(self):
+    """Test edycji płatności."""
+    self.client.login(username='admin', password='adminpass')
+    response = self.client.get(reverse('app:admin_edit_payment', args=[self.payment.id]))
+    self.assertEqual(response.status_code, 200)
+    self.assertIsInstance(response.context['form'], PaymentForm)
