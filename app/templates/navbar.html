@@ -1,0 +1,62 @@
+{% comment %} Pasek nawigacyjny dla wszystkich stron {% endcomment %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'app:dashboard' %}">eBOK</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        {% if user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'app:dashboard' %}">Panel główny</a>
+          </li>
+
+          {% if user.is_superuser %}
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle {% if 'admin' in request.resolver_match.url_name %}active{% endif %}" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Administracja
+              </a>
+              <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                <li><a class="dropdown-item" href="{% url 'app:admin_dashboard' %}">Panel administratora</a></li>
+                <li><a class="dropdown-item" href="{% url 'app:admin_add_apartment' %}">Dodaj mieszkanie</a></li>
+                <li><a class="dropdown-item" href="{% url 'app:admin_add_tenant' %}">Dodaj najemcę</a></li>
+                <li><a class="dropdown-item" href="{% url 'app:admin_payments' %}">Zarządzaj płatnościami</a></li>
+                <li><a class="dropdown-item" href="{% url 'app:admin_tickets' %}">Zgłoszenia</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{% url 'app:analytics_dashboard' %}">Analityka</a></li>
+                <li><a class="dropdown-item" href="{% url 'app:sensor_management' %}">Czujniki</a></li>
+                <li><a class="dropdown-item" href="{% url 'app:alerts_management' %}">Alerty</a></li>
+              </ul>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'user_payments' %}active{% endif %}" href="{% url 'app:user_payments' %}">Płatności</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'user_tickets' %}active{% endif %}" href="{% url 'app:user_tickets' %}">Zgłoszenia</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'add_ticket' %}active{% endif %}" href="{% url 'app:add_ticket' %}">Nowe zgłoszenie</a>
+            </li>
+          {% endif %}
+        {% endif %}
+      </ul>
+
+      <div class="navbar-nav ms-auto">
+        {% if user.is_authenticated %}
+          <span class="nav-item navbar-text me-3">
+            <i class="bi bi-person-fill"></i> {{ user.username }}
+          </span>
+          <a class="nav-item nav-link" href="{% url 'app:logout' %}">
+            <i class="bi bi-box-arrow-right"></i> Wyloguj
+          </a>
+        {% else %}
+          <a class="nav-item nav-link" href="{% url 'app:login' %}">
+            <i class="bi bi-box-arrow-in-right"></i> Zaloguj
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</nav>
