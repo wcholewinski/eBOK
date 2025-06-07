@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Import i analiza danych - eBOK{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📊 Import i analiza danych</h2>
+        <div>
+            <a href="{% url 'app:analytics_dashboard' %}" class="btn btn-outline-secondary">
+                ← Powrót do panelu analitycznego
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">📈 Import danych z jednoczesną analizą</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">
+                        Ta funkcja pozwala na jednoczesny import danych z pliku CSV oraz automatyczne wygenerowanie 
+                        analizy predykcyjnej na podstawie zaimportowanych danych. Zaznacz opcję "Generuj predykcje" 
+                        aby system automatycznie utworzył prognozy po zaimportowaniu danych.
+                    </p>
+
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="model_type" class="form-label">Typ importowanych danych</label>
+                            <select name="model_type" id="model_type" class="form-select" required>
+                                {% for value, label in model_types %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Wybierz jakiego rodzaju dane chcesz importować.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="csv_file" class="form-label">Plik CSV</label>
+                            <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
+                            <div class="form-text">Wybierz plik CSV z danymi do importu.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="date_format" class="form-label">Format daty w pliku</label>
+                            <select name="date_format" id="date_format" class="form-select">
+                                {% for value, label in date_formats %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Wybierz format daty używany w importowanym pliku.</div>
+                        </div>
+
+                        <div class="mb-4 form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="run_prediction" name="run_prediction">
+                            <label class="form-check-label" for="run_prediction">Generuj predykcje po imporcie</label>
+                            <div class="form-text">Zaznacz, aby system automatycznie przeprowadził analizę po zaimportowaniu danych.</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Importuj i analizuj</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">ℹ️ Wymagane formaty plików</h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="fileFormatAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOne">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                                    Format CSV dla mieszkań
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#fileFormatAccordion">
+                                <div class="accordion-body">
+                                    <p>Wymagane kolumny:</p>
+                                    <ul>
+                                        <li><code>number</code> - Numer mieszkania</li>
+                                        <li><code>floor</code> - Piętro</li>
+                                        <li><code>area</code> - Powierzchnia w m²</li>
+                                    </ul>
+                                    <p>Opcjonalne kolumny:</p>
+                                    <ul>
+                                        <li><code>rent</code> - Czynsz podstawowy</li>
+                                        <li><code>trash_fee</code> - Opłata za śmieci</li>
+                                        <li><code>water_fee</code> - Opłata za wodę</li>
+                                        <li><code>gas_fee</code> - Opłata za gaz</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTwo">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                                    Format CSV dla zużycia mediów
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#fileFormatAccordion">
+                                <div class="accordion-body">
+                                    <p>Wymagane kolumny:</p>
+                                    <ul>
+                                        <li><code>apartment_number</code> - Numer mieszkania</li>
+                                        <li><code>utility_type</code> - Typ mediów (electricity, water, gas, heating)</li>
+                                        <li><code>period_start</code> - Data początku okresu rozliczeniowego</li>
+                                        <li><code>period_end</code> - Data końca okresu rozliczeniowego</li>
+                                        <li><code>consumption</code> - Zużycie</li>
+                                        <li><code>unit</code> - Jednostka (kWh, m³, GJ)</li>
+                                        <li><code>cost</code> - Koszt</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingThree">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                                    Format CSV dla płatności
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#fileFormatAccordion">
+                                <div class="accordion-body">
+                                    <p>Wymagane kolumny:</p>
+                                    <ul>
+                                        <li><code>tenant_id</code> - ID najemcy</li>
+                                        <li><code>date</code> - Data płatności</li>
+                                        <li><code>amount</code> - Kwota</li>
+                                        <li><code>type</code> - Typ płatności (rent, water, electricity, gas, other)</li>
+                                        <li><code>status</code> - Status (paid, pending, overdue)</li>
+                                    </ul>
+                                    <p>Opcjonalne kolumny:</p>
+                                    <ul>
+                                        <li><code>description</code> - Opis płatności</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

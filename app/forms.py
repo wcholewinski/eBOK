@@ -1,77 +1,132 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Apartment, Tenant, Payment, Ticket
+from .models import Apartment, Tenant, Payment, Ticket, BuildingAlert, MaintenanceRequest
 
-# Formularz do dodawania/edycji mieszkań
+
+# Formularze podstawowych modeli
 class ApartmentForm(forms.ModelForm):
     class Meta:
         model = Apartment
         fields = ['number', 'floor', 'area', 'rent', 'trash_fee', 'water_fee', 'gas_fee']
 
-# Formularz do rejestracji najemcy + przypisanie do mieszkania
+
 class TenantForm(forms.ModelForm):
-    # Tworzymy nowego użytkownika przy dodawaniu lokatora
-    username = forms.CharField(label='Nazwa użytkownika')
-    password1 = forms.CharField(label='Hasło', widget=forms.PasswordInput)
-    password2 = forms.CharField(label='Powtórz hasło', widget=forms.PasswordInput)
-    
+    first_name = forms.CharField(required=True, label="Imię")
+    last_name = forms.CharField(required=True, label="Nazwisko")
+    email = forms.EmailField(required=True)
+    username = forms.CharField(required=True, label="Login")
+    password = forms.CharField(widget=forms.PasswordInput, label="Hasło")
+    phone_number = forms.CharField(required=False, label="Numer telefonu")
+
     class Meta:
         model = Tenant
         fields = ['apartment', 'num_occupants']
-    
-    def clean(self):
-        cleaned_data = super().clean()
-        password1 = cleaned_data.get('password1')
-        password2 = cleaned_data.get('password2')
-        
-        if password1 and password2 and password1 != password2:
-            raise forms.ValidationError("Hasła nie pasują do siebie")
-        
-        return cleaned_data
-    
+
     def save(self, commit=True):
-        # Tworzenie nowego użytkownika
+        # Tworzenie użytkownika
         user = User.objects.create_user(
             username=self.cleaned_data['username'],
-            password=self.cleaned_data['password1']
+            email=self.cleaned_data['email'],
+            password=self.cleaned_data['password'],
+            first_name=self.cleaned_data['first_name'],
+            last_name=self.cleaned_data['last_name']
         )
-        
-        # Tworzenie lokatora powiązanego z nowym użytkownikiem
+        # Tworzenie najemcy
         tenant = super().save(commit=False)
         tenant.user = user
-        
+        tenant.phone_number = self.cleaned_data.get('phone_number', '')
         if commit:
             tenant.save()
-        
         return tenant
 
-# Formularz płatności
+
 class PaymentForm(forms.ModelForm):
     class Meta:
         model = Payment
         fields = ['tenant', 'date', 'amount', 'type', 'status']
-        widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'}),
-        }
 
-# Formularz importu CSV mieszkań
-class CSVImportForm(forms.Form):
-    csv_file = forms.FileField(
-        label="Plik CSV z danymi mieszkań",
-        help_text="Format: number,floor,area,rent,trash_fee,water_fee,gas_fee"
-    )
 
-# Formularz zgłoszenia (ticket)
+# Formularze zgłoszeń i konserwacji
 class TicketForm(forms.ModelForm):
     class Meta:
         model = Ticket
         fields = ['title', 'description', 'status']
         widgets = {
+            'description': forms.Textarea(attrs={'rows': 5}),
+        }
+
+
+class MaintenanceRequestForm(forms.ModelForm):
+    class Meta:
+        model = MaintenanceRequest
+        fields = ['apartment', 'title', 'description', 'priority']
+        widgets = {
             'description': forms.Textarea(attrs={'rows': 4}),
         }
-        labels = {
-            'title': 'Tytuł zgłoszenia',
-            'description': 'Opis',
-            'status': 'Status'
+
+
+class BuildingAlertForm(forms.ModelForm):
+    class Meta:
+        model = BuildingAlert
+        fields = ['apartment', 'title', 'message', 'alert_type', 'severity', 'is_active', 'expires_at']
+        widgets = {
+            'message': forms.Textarea(attrs={'rows': 3}),
+            'expires_at': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
+
+
+# Formularze użytkowników i autoryzacji
+class UserRegistrationForm(UserCreationForm):
+    email = forms.EmailField(required=True)
+    first_name = forms.CharField(required=True)
+    last_name = forms.CharField(required=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2']
+
+
+# Formularze importu danych
+class CSVImportForm(forms.Form):
+    csv_file = forms.FileField(
+        label="Wybierz plik CSV",
+        help_text="Obsługiwane formaty: CSV z separatorem przecinka, średnika lub tabulatora."
+    )
+
+
+class AdvancedCSVImportForm(forms.Form):
+    csv_file = forms.FileField(
+        label="Wybierz plik CSV",
+        help_text="Obsługiwane formaty: CSV z separatorem przecinka, średnika lub tabulatora."
+    )
+    model_type = forms.ChoiceField(
+        label="Typ danych",
+        choices=[
+            ('apartment', 'Mieszkania'),
+            ('utility_consumption', 'Zużycie mediów'),
+            ('payment', 'Płatności')
+        ],
+        help_text="Wybierz typ danych do importu"
+    )
+    date_format = forms.ChoiceField(
+        label="Format daty",
+        choices=[
+            ('%Y-%m-%d', 'RRRR-MM-DD'),
+            ('%d-%m-%Y', 'DD-MM-RRRR'),
+            ('%d.%m.%Y', 'DD.MM.RRRR'),
+            ('%m/%d/%Y', 'MM/DD/RRRR')
+        ],
+        help_text="Wybierz format daty używany w pliku CSV",
+        initial='%Y-%m-%d'
+    )
+    has_header = forms.BooleanField(
+        label="Plik zawiera nagłówki",
+        initial=True,
+        required=False,
+        help_text="Zaznacz, jeśli pierwszy wiersz pliku zawiera nazwy kolumn"
+    )
+
+
+class UtilityConsumptionImportForm(forms.Form):
+    csv_file = forms.FileField(label="Wybierz plik CSV z danymi zużycia")

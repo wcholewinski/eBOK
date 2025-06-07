@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Zgłoszenia{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4">Zarządzanie zgłoszeniami</h2>
+
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <div class="input-group">
+        <input type="text" id="ticketSearch" class="form-control" placeholder="Szukaj zgłoszeń...">
+        <button class="btn btn-outline-secondary" type="button">Szukaj</button>
+      </div>
+    </div>
+    <div class="col-md-6 text-md-end">
+      <div class="btn-group" role="group">
+        <button type="button" class="btn btn-outline-primary">Wszystkie</button>
+        <button type="button" class="btn btn-outline-warning">Nowe</button>
+        <button type="button" class="btn btn-outline-info">W trakcie</button>
+        <button type="button" class="btn btn-outline-success">Zamknięte</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Tytuł</th>
+          <th>Najemca</th>
+          <th>Mieszkanie</th>
+          <th>Status</th>
+          <th>Priorytet</th>
+          <th>Data utworzenia</th>
+          <th>Akcje</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ticket in tickets %}
+        <tr>
+          <td>{{ ticket.id }}</td>
+          <td>{{ ticket.title }}</td>
+          <td>{{ ticket.tenant.user.first_name }} {{ ticket.tenant.user.last_name }}</td>
+          <td>{{ ticket.tenant.apartment.number }}</td>
+          <td>
+            {% if ticket.status == 'new' %}
+              <span class="badge bg-warning">Nowe</span>
+            {% elif ticket.status == 'in_progress' %}
+              <span class="badge bg-info">W trakcie</span>
+            {% else %}
+              <span class="badge bg-success">Zamknięte</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if ticket.priority == 'high' %}
+              <span class="badge bg-danger">Wysoki</span>
+            {% elif ticket.priority == 'medium' %}
+              <span class="badge bg-warning">Średni</span>
+            {% else %}
+              <span class="badge bg-secondary">Niski</span>
+            {% endif %}
+          </td>
+          <td>{{ ticket.created_at|date:"d.m.Y H:i" }}</td>
+          <td>
+            <div class="btn-group" role="group">
+              <a href="{% url 'app:admin_edit_ticket' ticket.id %}" class="btn btn-sm btn-outline-primary">Edytuj</a>
+              <a href="{% url 'app:ticket_detail' ticket.id %}" class="btn btn-sm btn-outline-info">Szczegóły</a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="text-center">Brak zgłoszeń</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="row mt-4">
+    <div class="col-md-6">
+      <p>Wyświetlanie {{ tickets|length }} zgłoszeń</p>
+    </div>
+    <div class="col-md-6">
+      <nav aria-label="Nawigacja stronicowania">
+        <ul class="pagination justify-content-end">
+          <li class="page-item disabled">
+            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Poprzednia</a>
+          </li>
+          <li class="page-item active"><a class="page-link" href="#">1</a></li>
+          <li class="page-item"><a class="page-link" href="#">2</a></li>
+          <li class="page-item"><a class="page-link" href="#">3</a></li>
+          <li class="page-item">
+            <a class="page-link" href="#">Następna</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+{% endblock %}

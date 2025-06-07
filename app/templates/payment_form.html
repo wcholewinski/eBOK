@@ -1,5 +1,118 @@
 {% extends "base.html" %}
+{% extends "base.html" %}
 
+{% block title %}{% if payment %}Edycja płatności{% else %}Dodaj płatność{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4">{% if payment %}Edycja płatności #{{ payment.id }}{% else %}Dodaj nową płatność{% endif %}</h2>
+
+  <form method="post" class="mb-3">
+    {% csrf_token %}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="{{ form.tenant.id_for_label }}" class="form-label">{{ form.tenant.label }}</label>
+              {{ form.tenant }}
+              {% if form.tenant.errors %}
+                <div class="text-danger small mt-1">{{ form.tenant.errors }}</div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="{{ form.date.id_for_label }}" class="form-label">{{ form.date.label }}</label>
+              {{ form.date }}
+              {% if form.date.errors %}
+                <div class="text-danger small mt-1">{{ form.date.errors }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4">
+            <div class="mb-3">
+              <label for="{{ form.amount.id_for_label }}" class="form-label">{{ form.amount.label }}</label>
+              {{ form.amount }}
+              {% if form.amount.errors %}
+                <div class="text-danger small mt-1">{{ form.amount.errors }}</div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="mb-3">
+              <label for="{{ form.type.id_for_label }}" class="form-label">{{ form.type.label }}</label>
+              {{ form.type }}
+              {% if form.type.errors %}
+                <div class="text-danger small mt-1">{{ form.type.errors }}</div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="mb-3">
+              <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }}</label>
+              {{ form.status }}
+              {% if form.status.errors %}
+                <div class="text-danger small mt-1">{{ form.status.errors }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
+          {{ form.notes }}
+          {% if form.notes.errors %}
+            <div class="text-danger small mt-1">{{ form.notes.errors }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between">
+      <div>
+        <button type="submit" class="btn btn-primary">{% if payment %}Zapisz zmiany{% else %}Dodaj płatność{% endif %}</button>
+        <a href="{% url 'app:admin_payments' %}" class="btn btn-secondary ms-2">Anuluj</a>
+      </div>
+      {% if payment %}
+      <div>
+        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deletePaymentModal">
+          Usuń płatność
+        </button>
+      </div>
+      {% endif %}
+    </div>
+  </form>
+
+  {% if payment %}
+  <!-- Modal usuwania płatności -->
+  <div class="modal fade" id="deletePaymentModal" tabindex="-1" aria-labelledby="deletePaymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deletePaymentModalLabel">Potwierdź usunięcie</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Czy na pewno chcesz usunąć płatność #{{ payment.id }} w kwocie {{ payment.amount }} zł od {{ payment.tenant }}?</p>
+          <p class="text-danger"><strong>Ta operacja jest nieodwracalna!</strong></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+          <form method="post" action="#">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Usuń płatność</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
 {% block title %}{{ is_edit|yesno:"Edytuj płatność,Dodaj płatność" }}{% endblock %}
 
 {% block content %}
@@ -23,7 +136,7 @@
     {% endfor %}
     <div class="d-flex gap-2">
       <button type="submit" class="btn btn-success">
-        {{ is_edit|yesno:"Zapisz,Zapisz" }}
+        {{ is_edit|yesno:"Zapisz zmiany,Zapisz" }}
       </button>
       <a href="{% url 'app:admin_payments' %}" class="btn btn-secondary">Anuluj</a>
     </div>

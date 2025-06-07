@@ -1,10 +1,792 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Trendy zużycia mediów{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/js/charts.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-graph-up me-2"></i>Trendy zużycia mediów</h2>
+    <div class="d-flex gap-2">
+      <a href="{% url 'app:analytics_dashboard' %}" class="btn btn-outline-primary">
+        <i class="bi bi-speedometer2 me-1"></i> Dashboard analityczny
+      </a>
+    </div>
+  </div>
+
+  <!-- Karty statystyk -->
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3 mb-md-0">
+      <div class="card text-white bg-primary h-100">
+        <div class="card-body d-flex">
+          <div class="me-3">
+            <i class="bi bi-lightning-charge" style="font-size: 2rem;"></i>
+          </div>
+          <div>
+            <h6 class="card-title">Śr. zużycie prądu</h6>
+            <h4 class="card-text mb-0">{{ stats.electricity.avg_consumption|floatformat:1 }} kWh</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3 mb-md-0">
+      <div class="card text-white bg-info h-100">
+        <div class="card-body d-flex">
+          <div class="me-3">
+            <i class="bi bi-droplet-fill" style="font-size: 2rem;"></i>
+          </div>
+          <div>
+            <h6 class="card-title">Śr. zużycie wody</h6>
+            <h4 class="card-text mb-0">{{ stats.water.avg_consumption|floatformat:1 }} m³</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3 mb-md-0">
+      <div class="card text-dark bg-warning h-100">
+        <div class="card-body d-flex">
+          <div class="me-3">
+            <i class="bi bi-fire" style="font-size: 2rem;"></i>
+          </div>
+          <div>
+            <h6 class="card-title">Śr. zużycie gazu</h6>
+            <h4 class="card-text mb-0">{{ stats.gas.avg_consumption|floatformat:1 }} m³</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - eBOK{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📊 {{ title }}</h2>
+        <div>
+            <div class="dropdown d-inline-block me-2">
+                <button class="btn btn-primary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-file-export"></i> Eksportuj dane
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                    <li><a class="dropdown-item" href="{% url 'app:utility_export_filter' %}?apartment_id={{ apartment_id|default:'' }}&utility_type={{ utility_type|default:'' }}">Eksportuj dane zużycia</a></li>
+                    <li><a class="dropdown-item" href="{% url 'app:prediction_export_filter' %}?type=consumption&apartment_id={{ apartment_id|default:'' }}&utility_type={{ utility_type|default:'' }}">Eksportuj predykcje zużycia</a></li>
+                    <li><a class="dropdown-item" href="{% url 'app:prediction_export_filter' %}?type=cost&apartment_id={{ apartment_id|default:'' }}&utility_type={{ utility_type|default:'' }}">Eksportuj predykcje kosztów</a></li>
+                    <li><a class="dropdown-item" href="{% url 'app:export_ml_dataset' %}">Eksportuj pełny zestaw danych</a></li>
+                </ul>
+            </div>
+            <a href="{% url 'app:import_utility_consumption' %}" class="btn btn-success me-2">
+                <i class="fas fa-file-import"></i> Importuj dane CSV
+            </a>
+            <a href="{% url 'app:analytics_dashboard' %}" class="btn btn-outline-secondary">
+                ← Powrót do panelu analitycznego
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtry -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Filtry</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="apartment" class="form-label">Mieszkanie</label>
+                    <select name="apartment" id="apartment" class="form-select">
+                        <option value="">Wszystkie mieszkania</option>
+                        {% for apartment in apartments %}
+                            <option value="{{ apartment.id }}" {% if selected_apartment == apartment.id %}selected{% endif %}>
+                                Mieszkanie {{ apartment.number }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="utility_type" class="form-label">Rodzaj mediów</label>
+                    <select name="utility_type" id="utility_type" class="form-select">
+                        <option value="">Wszystkie media</option>
+                        {% for value, label in utility_types %}
+                            <option value="{{ value }}" {% if selected_utility == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="period" class="form-label">Okres</label>
+                    <select name="period" id="period" class="form-select">
+                        <option value="6" {% if selected_period == 6 %}selected{% endif %}>Ostatnie 6 miesięcy</option>
+                        <option value="12" {% if selected_period == 12 %}selected{% endif %}>Ostatni rok</option>
+                        <option value="24" {% if selected_period == 24 %}selected{% endif %}>Ostatnie 2 lata</option>
+                    </select>
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-primary">Filtruj</button>
+                    <a href="{% url 'app:consumption_trends' %}" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Wykresy zużycia -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Zużycie mediów w czasie</h5>
+        </div>
+        <div class="card-body">
+            <div id="consumptionChart" style="height: 400px;"></div>
+        </div>
+    </div>
+
+    <!-- Wykresy kosztów -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Koszty mediów w czasie</h5>
+        </div>
+        <div class="card-body">
+            <div id="costChart" style="height: 400px;"></div>
+        </div>
+    </div>
+
+    <!-- Predykcje -->
+    {% if predictions %}
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">🔮 Predykcje zużycia na kolejne miesiące</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for utility_type, utility_predictions in predictions.items %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            {% if utility_type == 'electricity' %}
+                                ⚡ Prąd
+                            {% elif utility_type == 'water' %}
+                                💧 Woda
+                            {% elif utility_type == 'gas' %}
+                                🔥 Gaz
+                            {% elif utility_type == 'heating' %}
+                                🔥 Ogrzewanie
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Miesiąc</th>
+                                            <th>Przewidywane zużycie</th>
+                                            <th>Trend</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for prediction in utility_predictions %}
+                                        <tr>
+                                            <td>{{ prediction.month }}</td>
+                                            <td>{{ prediction.predicted_consumption }}</td>
+                                            <td>
+                                                {% if forloop.counter > 1 %}
+                                                    {% with prev=utility_predictions|index:forloop.counter0|add:-1 %}
+                                                        {% if prediction.predicted_consumption > prev.predicted_consumption %}
+                                                            <span class="text-danger">↗️ +{{ prediction.predicted_consumption|sub:prev.predicted_consumption|floatformat:1 }}</span>
+                                                        {% else %}
+                                                            <span class="text-success">↘️ {{ prediction.predicted_consumption|sub:prev.predicted_consumption|floatformat:1 }}</span>
+                                                        {% endif %}
+                                                    {% endwith %}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Predykcje kosztów -->
+    {% if cost_predictions.detailed %}
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">💰 Predykcje kosztów na kolejne miesiące</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h6 class="border-bottom pb-2">Łączne koszty</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Miesiąc</th>
+                                    <th>Przewidywane koszty</th>
+                                    <th>Trend</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for prediction in cost_predictions.total %}
+                                <tr>
+                                    <td>{{ prediction.month }}</td>
+                                    <td>{{ prediction.total_cost|floatformat:2 }} PLN</td>
+                                    <td>
+                                        {% if forloop.counter > 1 %}
+                                            {% with prev=cost_predictions.total|index:forloop.counter0|add:-1 %}
+                                                {% if prediction.total_cost > prev.total_cost %}
+                                                    <span class="text-danger">↗️ +{{ prediction.total_cost|sub:prev.total_cost|floatformat:1 }}</span>
+                                                {% else %}
+                                                    <span class="text-success">↘️ {{ prediction.total_cost|sub:prev.total_cost|floatformat:1 }}</span>
+                                                {% endif %}
+                                            {% endwith %}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                {% for utility_type, utility_cost_predictions in cost_predictions.detailed.items %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            {% if utility_type == 'electricity' %}
+                                ⚡ Koszty - Prąd
+                            {% elif utility_type == 'water' %}
+                                💧 Koszty - Woda
+                            {% elif utility_type == 'gas' %}
+                                🔥 Koszty - Gaz
+                            {% elif utility_type == 'heating' %}
+                                🔥 Koszty - Ogrzewanie
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Miesiąc</th>
+                                            <th>Przewidywany koszt</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for prediction in utility_cost_predictions %}
+                                        <tr>
+                                            <td>{{ prediction.month }}</td>
+                                            <td>{{ prediction.predicted_cost|floatformat:2 }} PLN</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Statystyki -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary h-100">
+                <div class="card-body">
+                    <h5 class="card-title">⚡ Prąd</h5>
+                    <p>Śr. zużycie: {{ stats.electricity.avg_consumption|floatformat:1 }} kWh</p>
+                    <p>Łączny koszt: {{ stats.electricity.total_cost|floatformat:2 }} PLN</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info h-100">
+                <div class="card-body">
+                    <h5 class="card-title">💧 Woda</h5>
+                    <p>Śr. zużycie: {{ stats.water.avg_consumption|floatformat:1 }} m³</p>
+                    <p>Łączny koszt: {{ stats.water.total_cost|floatformat:2 }} PLN</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning h-100">
+                <div class="card-body">
+                    <h5 class="card-title">🔥 Gaz</h5>
+                    <p>Śr. zużycie: {{ stats.gas.avg_consumption|floatformat:1 }} m³</p>
+                    <p>Łączny koszt: {{ stats.gas.total_cost|floatformat:2 }} PLN</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger h-100">
+                <div class="card-body">
+                    <h5 class="card-title">🔥 Ogrzewanie</h5>
+                    <p>Śr. zużycie: {{ stats.heating.avg_consumption|floatformat:1 }} GJ</p>
+                    <p>Łączny koszt: {{ stats.heating.total_cost|floatformat:2 }} PLN</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Skrypty wykresów -->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Dane do wykresów
+        const chartData = {{ chart_data|safe }};
+
+        // Wykres zużycia
+        const consumptionChart = document.getElementById('consumptionChart');
+        Plotly.newPlot(consumptionChart, [
+            {
+                x: chartData.periods,
+                y: chartData.electricity,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Prąd (kWh)',
+                line: {color: '#007bff'}
+            },
+            {
+                x: chartData.periods,
+                y: chartData.water,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Woda (m³)',
+                line: {color: '#17a2b8'}
+            },
+            {
+                x: chartData.periods,
+                y: chartData.gas,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Gaz (m³)',
+                line: {color: '#ffc107'}
+            },
+            {
+                x: chartData.periods,
+                y: chartData.heating,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Ogrzewanie (GJ)',
+                line: {color: '#dc3545'}
+            }
+        ], {
+            title: 'Zużycie mediów w czasie',
+            xaxis: {title: 'Okres'},
+            yaxis: {title: 'Zużycie'},
+            legend: {orientation: 'h', y: 1.1}
+        });
+
+        // Wykres kosztów
+        const costChart = document.getElementById('costChart');
+        Plotly.newPlot(costChart, [
+            {
+                x: chartData.periods,
+                y: chartData.electricity_cost,
+                type: 'bar',
+                name: 'Prąd (PLN)',
+                marker: {color: '#007bff'}
+            },
+            {
+                x: chartData.periods,
+                y: chartData.water_cost,
+                type: 'bar',
+                name: 'Woda (PLN)',
+                marker: {color: '#17a2b8'}
+            },
+            {
+                x: chartData.periods,
+                y: chartData.gas_cost,
+                type: 'bar',
+                name: 'Gaz (PLN)',
+                marker: {color: '#ffc107'}
+            },
+            {
+                x: chartData.periods,
+                y: chartData.heating_cost,
+                type: 'bar',
+                name: 'Ogrzewanie (PLN)',
+                marker: {color: '#dc3545'}
+            }
+        ], {
+            title: 'Koszty mediów w czasie',
+            xaxis: {title: 'Okres'},
+            yaxis: {title: 'Koszt (PLN)'},
+            barmode: 'stack',
+            legend: {orientation: 'h', y: 1.1}
+        });
+    });
+</script>
+{% endblock %}
+    <div class="col-md-3">
+      <div class="card text-white bg-danger h-100">
+        <div class="card-body d-flex">
+          <div class="me-3">
+            <i class="bi bi-thermometer-high" style="font-size: 2rem;"></i>
+          </div>
+          <div>
+            <h6 class="card-title">Śr. zużycie ciepła</h6>
+            <h4 class="card-text mb-0">{{ stats.heating.avg_consumption|floatformat:1 }} GJ</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wykres liniowy trendów -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="card-title mb-0"><i class="bi bi-graph-up me-2"></i>Zużycie mediów w czasie</h5>
+        </div>
+        <div class="card-body">
+          {% if periods %}
+            <canvas id="consumptionChart" height="300"></canvas>
+          {% else %}
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle me-2"></i>Brak danych o zużyciu mediów w czasie
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabele zużycia mediów -->
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-primary text-white">
+          <h5 class="card-title mb-0"><i class="bi bi-lightning-charge me-2"></i>Zużycie prądu</h5>
+        </div>
+        <div class="card-body">
+          {% if electricity_data %}
+            <table class="table table-sm table-hover">
+              <thead>
+                <tr>
+                  <th>Okres</th>
+                  <th>Zużycie (kWh)</th>
+                  <th>Koszt (zł)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in electricity_data %}
+                  <tr>
+                    <td>{{ item.period }}</td>
+                    <td>{{ item.consumption|floatformat:1 }}</td>
+                    <td>{{ item.cost|floatformat:2 }} zł</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+              <tfoot class="table-light">
+                <tr>
+                  <th>Całkowity koszt:</th>
+                  <td></td>
+                  <td class="fw-bold">{{ stats.electricity.total_cost|floatformat:2 }} zł</td>
+                </tr>
+              </tfoot>
+            </table>
+          {% else %}
+            <p class="text-muted">Brak danych o zużyciu prądu</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-info text-white">
+          <h5 class="card-title mb-0"><i class="bi bi-droplet-fill me-2"></i>Zużycie wody</h5>
+        </div>
+        <div class="card-body">
+          {% if water_data %}
+            <table class="table table-sm table-hover">
+              <thead>
+                <tr>
+                  <th>Okres</th>
+                  <th>Zużycie (m³)</th>
+                  <th>Koszt (zł)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in water_data %}
+                  <tr>
+                    <td>{{ item.period }}</td>
+                    <td>{{ item.consumption|floatformat:1 }}</td>
+                    <td>{{ item.cost|floatformat:2 }} zł</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+              <tfoot class="table-light">
+                <tr>
+                  <th>Całkowity koszt:</th>
+                  <td></td>
+                  <td class="fw-bold">{{ stats.water.total_cost|floatformat:2 }} zł</td>
+                </tr>
+              </tfoot>
+            </table>
+          {% else %}
+            <p class="text-muted">Brak danych o zużyciu wody</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-warning text-dark">
+          <h5 class="card-title mb-0"><i class="bi bi-fire me-2"></i>Zużycie gazu</h5>
+        </div>
+        <div class="card-body">
+          {% if gas_data %}
+            <table class="table table-sm table-hover">
+              <thead>
+                <tr>
+                  <th>Okres</th>
+                  <th>Zużycie (m³)</th>
+                  <th>Koszt (zł)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in gas_data %}
+                  <tr>
+                    <td>{{ item.period }}</td>
+                    <td>{{ item.consumption|floatformat:1 }}</td>
+                    <td>{{ item.cost|floatformat:2 }} zł</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+              <tfoot class="table-light">
+                <tr>
+                  <th>Całkowity koszt:</th>
+                  <td></td>
+                  <td class="fw-bold">{{ stats.gas.total_cost|floatformat:2 }} zł</td>
+                </tr>
+              </tfoot>
+            </table>
+          {% else %}
+            <p class="text-muted">Brak danych o zużyciu gazu</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-danger text-white">
+          <h5 class="card-title mb-0"><i class="bi bi-thermometer-high me-2"></i>Zużycie ogrzewania</h5>
+        </div>
+        <div class="card-body">
+          {% if heating_data %}
+            <table class="table table-sm table-hover">
+              <thead>
+                <tr>
+                  <th>Okres</th>
+                  <th>Zużycie (GJ)</th>
+                  <th>Koszt (zł)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in heating_data %}
+                  <tr>
+                    <td>{{ item.period }}</td>
+                    <td>{{ item.consumption|floatformat:1 }}</td>
+                    <td>{{ item.cost|floatformat:2 }} zł</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+              <tfoot class="table-light">
+                <tr>
+                  <th>Całkowity koszt:</th>
+                  <td></td>
+                  <td class="fw-bold">{{ stats.heating.total_cost|floatformat:2 }} zł</td>
+                </tr>
+              </tfoot>
+            </table>
+          {% else %}
+            <p class="text-muted">Brak danych o zużyciu ogrzewania</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    {% if periods %}
+      const chartData = {{ chart_data|safe }};
+      initConsumptionChart(chartData);
+    {% endif %}
+  });
+</script>
+{% endblock %}
+{% block title %}Trendy płatności - eBOK{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📈 Trendy płatności i zużycia</h2>
+        <a href="{% url 'app:analytics_dashboard' %}" class="btn btn-outline-secondary">
+            ← Powrót do analityki
+        </a>
+    </div>
+
+    <!-- Statystyki płatności -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📊 Przegląd płatności w budynku</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_payments %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>📅 Data</th>
+                                        <th>👤 Lokator</th>
+                                        <th>🏠 Mieszkanie</th>
+                                        <th>📝 Typ płatności</th>
+                                        <th>💰 Kwota</th>
+                                        <th>✅ Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for payment in recent_payments %}
+                                    <tr>
+                                        <td>{{ payment.date|date:"d.m.Y" }}</td>
+                                        <td>
+                                            <strong>{{ payment.tenant.user.username }}</strong>
+                                            <br><small class="text-muted">{{ payment.tenant.user.email|default:"Brak email" }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">Nr {{ payment.tenant.apartment.number }}</span>
+                                            <br><small class="text-muted">Piętro {{ payment.tenant.apartment.floor }}</small>
+                                        </td>
+                                        <td>
+                                            {% if payment.type == 'rent' %}
+                                                <span class="badge bg-info">🏠 {{ payment.get_type_display }}</span>
+                                            {% elif payment.type == 'water' %}
+                                                <span class="badge bg-primary">💧 {{ payment.get_type_display }}</span>
+                                            {% elif payment.type == 'gas' %}
+                                                <span class="badge bg-warning">🔥 {{ payment.get_type_display }}</span>
+                                            {% elif payment.type == 'electricity' %}
+                                                <span class="badge bg-danger">⚡ {{ payment.get_type_display }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ payment.get_type_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td><strong>{{ payment.amount }} zł</strong></td>
+                                        <td>
+                                            {% if payment.status == 'paid' %}
+                                                <span class="badge bg-success">✅ Opłacone</span>
+                                            {% elif payment.status == 'pending' %}
+                                                <span class="badge bg-warning">⏳ Oczekujące</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">❌ {{ payment.get_status_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">ℹ️ Brak danych</h6>
+                            <p class="mb-0">Nie ma jeszcze żadnych płatności do analizy.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Przegląd mieszkań -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">🏢 Przegląd mieszkań w budynku</h5>
+        </div>
+        <div class="card-body">
+            {% if apartments %}
+                <div class="row">
+                    {% for apartment in apartments %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-start border-4 border-primary">
+                            <div class="card-body">
+                                <h6 class="card-title">🏠 Mieszkanie {{ apartment.number }}</h6>
+                                <div class="card-text">
+                                    <small class="text-muted">
+                                        📍 Piętro: <strong>{{ apartment.floor }}</strong><br>
+                                        📐 Powierzchnia: <strong>{{ apartment.area }} m²</strong><br>
+                                        💰 Czynsz: <strong>{{ apartment.rent }} zł/mies.</strong>
+                                    </small>
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        🧾 Opłaty dodatkowe:<br>
+                                        💧 Woda: {{ apartment.water_fee }} zł | 
+                                        🔥 Gaz: {{ apartment.gas_fee }} zł | 
+                                        🗑️ Śmieci: {{ apartment.trash_fee }} zł
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading">⚠️ Brak mieszkań</h6>
+                    <p class="mb-0">Nie ma jeszcze mieszkań w systemie.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Planowane funkcje -->
+    <div class="card mt-4 bg-light">
+        <div class="card-header">
+            <h5 class="mb-0">🚀 Planowane funkcje analityczne</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>📊 Wykresy i raporty</h6>
+                    <ul class="list-unstyled">
+                        <li>📈 Trendy płatności miesięcznych</li>
+                        <li>💰 Analiza kosztów mediów</li>
+                        <li>📉 Prognozowanie zużycia</li>
+                        <li>📋 Raporty finansowe</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>🤖 Sztuczna inteligencja</h6>
+                    <ul class="list-unstyled">
+                        <li>🎯 Przewidywanie opłat</li>
+                        <li>🔍 Wykrywanie anomalii</li>
+                        <li>📊 Opt

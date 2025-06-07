@@ -1,28 +1,46 @@
 {% extends "base.html" %}
 
-{% block title %}Nowe zgłoszenie{% endblock %}
+{% block title %}{% if ticket %}Edycja zgłoszenia{% else %}Nowe zgłoszenie{% endif %}{% endblock %}
 
 {% block content %}
-<div class="container py-4" style="max-width: 600px;">
-  <h2 class="mb-4">Nowe zgłoszenie</h2>
-  <form method="post" novalidate>
-    {% csrf_token %}
-    {% for field in form %}
-      <div class="mb-3">
-        {{ field.label_tag }}
-        {{ field }}
-        {% if field.help_text %}
-          <div class="form-text">{{ field.help_text }}</div>
-        {% endif %}
-        {% if field.errors %}
-          <div class="invalid-feedback d-block">{{ field.errors|striptags }}</div>
-        {% endif %}
-      </div>
-    {% endfor %}
-    <div class="d-flex gap-2">
-      <button type="submit" class="btn btn-success">Zgłoś</button>
-      <a href="{% url 'app:user_tickets' %}" class="btn btn-secondary">Anuluj</a>
+<div class="container py-4" style="max-width: 800px;">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h2 class="h4 mb-0">
+        <i class="bi {% if ticket %}bi-pencil-square{% else %}bi-plus-circle{% endif %} me-2"></i>
+        {% if ticket %}Edycja zgłoszenia{% else %}Nowe zgłoszenie{% endif %}
+      </h2>
     </div>
-  </form>
+    <div class="card-body p-4">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+          <div class="mb-3">
+            {{ field.label_tag }}
+            {% if field.name == 'description' %}
+              <textarea name="{{ field.name }}" class="form-control {% if field.errors %}is-invalid{% endif %}" rows="5">{{ field.value|default:'' }}</textarea>
+            {% else %}
+              {{ field }}
+            {% endif %}
+            {% if field.help_text %}
+              <div class="form-text text-muted"><small>{{ field.help_text }}</small></div>
+            {% endif %}
+            {% if field.errors %}
+              <div class="invalid-feedback d-block">{{ field.errors|striptags }}</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+        <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn btn-primary btn-icon">
+            <i class="bi {% if ticket %}bi-save{% else %}bi-check-circle{% endif %} me-1"></i>
+            {% if ticket %}Zapisz zmiany{% else %}Wyślij zgłoszenie{% endif %}
+          </button>
+          <a href="{% url 'app:user_tickets' %}" class="btn btn-outline-secondary btn-icon">
+            <i class="bi bi-x-circle me-1"></i> Anuluj
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 {% endblock %}

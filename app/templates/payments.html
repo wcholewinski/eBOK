@@ -23,12 +23,13 @@
             <td>{{ p.get_type_display }}</td>
             <td>{{ p.amount }} zł</td>
             <td>
-              <span class="badge
-                {% if p.status == 'paid' %}bg-<span class="badge bg-success">Opłata została zaksięgowana.</span>ss
-                {% elif p.status == 'pending' %}bg-warning text-dark
-                {% else %}bg-secondary{% endif %}">
-                {{ p.get_status_display }}
-              </span>
+              {% if p.status == 'paid' %}
+                <span class="badge bg-success">Opłata została zaksięgowana</span>
+              {% elif p.status == 'pending' %}
+                <span class="badge bg-warning text-dark">{{ p.get_status_display }}</span>
+              {% else %}
+                <span class="badge bg-secondary">{{ p.get_status_display }}</span>
+              {% endif %}
             </td>
           </tr>
         {% empty %}

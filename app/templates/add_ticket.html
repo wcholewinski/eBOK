@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Nowe zgłoszenie{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h2 class="h4 mb-0"><i class="bi bi-ticket-perforated me-2"></i>Nowe zgłoszenie</h2>
+        </div>
+        <div class="card-body p-4">
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <!-- Tytuł zgłoszenia -->
+            <div class="mb-3">
+              <label for="{{ form.title.id_for_label }}" class="form-label fw-bold">Tytuł zgłoszenia</label>
+              <input type="text" 
+                     name="{{ form.title.html_name }}" 
+                     id="{{ form.title.id_for_label }}" 
+                     class="form-control {% if form.title.errors %}is-invalid{% endif %}"
+                     value="{{ form.title.value|default:'' }}"
+                     placeholder="Krótki opis problemu"
+                     required>
+              {% if form.title.errors %}
+                <div class="invalid-feedback">
+                  {{ form.title.errors|striptags }}
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Opis zgłoszenia -->
+            <div class="mb-3">
+              <label for="{{ form.description.id_for_label }}" class="form-label fw-bold">Szczegółowy opis</label>
+              <textarea name="{{ form.description.html_name }}" 
+                        id="{{ form.description.id_for_label }}" 
+                        class="form-control {% if form.description.errors %}is-invalid{% endif %}"
+                        placeholder="Opisz szczegółowo, na czym polega problem"
+                        rows="5"
+                        required>{{ form.description.value|default:'' }}</textarea>
+              {% if form.description.errors %}
+                <div class="invalid-feedback">
+                  {{ form.description.errors|striptags }}
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Priorytet zgłoszenia -->
+            <div class="mb-4">
+              <label for="{{ form.priority.id_for_label }}" class="form-label fw-bold">Priorytet</label>
+              <select name="{{ form.priority.html_name }}" 
+                      id="{{ form.priority.id_for_label }}" 
+                      class="form-select {% if form.priority.errors %}is-invalid{% endif %}">
+                {% for value, text in form.priority.field.choices %}
+                  <option value="{{ value }}" {% if form.priority.value == value %}selected{% endif %}>{{ text }}</option>
+                {% endfor %}
+              </select>
+              {% if form.priority.errors %}
+                <div class="invalid-feedback">
+                  {{ form.priority.errors|striptags }}
+                </div>
+              {% endif %}
+              <div class="form-text text-muted">
+                <small>Wybierz priorytet odpowiedni do natury problemu</small>
+              </div>
+            </div>
+
+            <!-- Przyciski formularza -->
+            <div class="d-flex justify-content-between align-items-center">
+              <a href="{% url 'app:tickets' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Powrót
+              </a>
+              <button type="submit" class="btn btn-success px-4">
+                <i class="bi bi-send me-1"></i> Wyślij zgłoszenie
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Dodatkowe informacje -->
+      <div class="card mt-3 shadow-sm">
+        <div class="card-header bg-light">
+          <h3 class="h6 mb-0">Informacje</h3>
+        </div>
+        <div class="card-body">
+          <p class="text-muted mb-0">
+            <small>
+              Twoje zgłoszenie zostanie przyjęte i rozpatrzone w najkrótszym możliwym czasie. 
+              Status zgłoszenia możesz śledzić w sekcji "Moje zgłoszenia".
+            </small>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

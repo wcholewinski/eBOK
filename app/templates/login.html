@@ -8,21 +8,68 @@
     <h2 class="card-title text-center mb-4">Zaloguj się</h2>
     <form method="post" novalidate>
       {% csrf_token %}
-      {% for field in form %}
-        <div class="mb-3">
-          {{ field.label_tag }}
-          {{ field }}
-          {% if field.errors %}
-            <div class="invalid-feedback d-block">
-              {{ field.errors|striptags }}
-            </div>
-          {% endif %}
-        </div>
+
+      <!-- Ukryte pole dla form.username (zachowujemy oryginalny form dla backend) -->
+      {% for hidden in form.hidden_fields %}
+        {{ hidden }}
       {% endfor %}
-      <div class="d-grid">
+
+      <!-- Pole nazwy użytkownika -->
+      <div class="form-group mb-3">
+        <label for="id_username" class="form-label">Nazwa użytkownika</label>
+        <input type="text" name="username" id="id_username" 
+               class="form-control" 
+               placeholder="Nazwa użytkownika" 
+               value="{{ form.username.value|default:'' }}" 
+               required>
+        {% if form.username.errors %}
+          <div class="invalid-feedback d-block">
+            {{ form.username.errors|striptags }}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Pole hasła -->
+      <div class="form-group mb-3">
+        <label for="id_password" class="form-label">Hasło</label>
+        <input type="password" name="password" id="id_password" 
+               class="form-control" 
+               placeholder="Hasło" 
+               required>
+        {% if form.password.errors %}
+          <div class="invalid-feedback d-block">
+            {{ form.password.errors|striptags }}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Błędy ogólne formularza -->
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+          {{ form.non_field_errors|striptags }}
+        </div>
+      {% endif %}
+
+      <div class="d-grid mt-4">
         <button type="submit" class="btn btn-primary">Zaloguj</button>
       </div>
     </form>
   </div>
 </div>
+
+<style>
+  /* Style dla pól formularza logowania */
+  .form-control {
+    height: calc(1.5em + 1rem + 2px);
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    border-radius: 0.3rem;
+  }
+
+  .form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+  }
+</style>
 {% endblock %}

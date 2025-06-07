@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 
+
 class Apartment(models.Model):
     number = models.CharField(
         max_length=3,
@@ -46,7 +47,12 @@ class Apartment(models.Model):
         verbose_name_plural = 'Mieszkania'
 
     def __str__(self):
-        return f"Mieszkanie {self.number} (piętro {self.floor})"
+        return f'Mieszkanie {self.number}'
+
+    def total_fees(self):
+        """Oblicza sumę wszystkich opłat za mieszkanie"""
+        return self.rent + self.trash_fee + self.water_fee + self.gas_fee
+
 
 class Tenant(models.Model):
     user = models.OneToOneField(
@@ -61,6 +67,12 @@ class Tenant(models.Model):
         related_name='tenants',
         verbose_name='Mieszkanie'
     )
+    phone_number = models.CharField(
+        max_length=15,
+        blank=True,
+        null=True,
+        verbose_name='Numer telefonu'
+    )
     num_occupants = models.PositiveIntegerField(
         default=1,
         verbose_name='Liczba osób'
@@ -71,7 +83,8 @@ class Tenant(models.Model):
         verbose_name_plural = 'Najemcy'
 
     def __str__(self):
-        return f"{self.user.username} – mieszkanie {self.apartment.number}"
+        return f'{self.user.get_full_name() or self.user.username}'
+
 
 class Payment(models.Model):
     RENT = 'rent'
@@ -84,14 +97,12 @@ class Payment(models.Model):
         (WATER,   'Woda'),
         (GAS,     'Gaz'),
     ]
-
     PENDING = 'pending'
     PAID = 'paid'
     STATUS_CHOICES = [
         (PENDING, 'Oczekujące'),
         (PAID,    'Opłacone'),
     ]
-
     tenant = models.ForeignKey(
         Tenant,
         on_delete=models.CASCADE,
@@ -125,7 +136,8 @@ class Payment(models.Model):
         verbose_name_plural = 'Płatności'
 
     def __str__(self):
-        return f"{self.get_type_display()} – {self.amount} zł ({self.get_status_display()})"
+        return f'Płatność: {self.amount} zł - {self.tenant.user.username} (Mieszkanie {self.tenant.apartment.number})'
+
 
 class Ticket(models.Model):
     NEW = 'new'
@@ -136,7 +148,11 @@ class Ticket(models.Model):
         (IN_PROGRESS,'W trakcie'),
         (CLOSED,     'Zamknięte'),
     ]
-
+    PRIORITY_CHOICES = [
+        ('low',     'Niski'),
+        ('medium',  'Średni'),
+        ('high',    'Wysoki'),
+    ]
     tenant = models.ForeignKey(
         Tenant,
         on_delete=models.CASCADE,
@@ -156,6 +172,12 @@ class Ticket(models.Model):
         default=NEW,
         verbose_name='Status'
     )
+    priority = models.CharField(
+        max_length=10,
+        choices=PRIORITY_CHOICES,
+        default='medium',
+        verbose_name='Priorytet'
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Data utworzenia'
@@ -171,73 +193,199 @@ class Ticket(models.Model):
         verbose_name_plural = 'Zgłoszenia'
 
     def __str__(self):
-        return f"[{self.get_status_display()}] {self.title}"
+        return f'{self.title} ({self.get_status_display()})'
 
-# app/models.py - dodaj nowe modele
 
-class Sensor(models.Model):
-    SENSOR_TYPES = [
-        ('temperature', 'Temperatura'),
-        ('humidity', 'Wilgotność'), 
-        ('water_flow', 'Przepływ wody'),
-        ('gas_consumption', 'Zużycie gazu'),
-        ('electricity', 'Zużycie energii'),
-        ('motion', 'Czujnik ruchu'),
-    ]
-    
-    name = models.CharField(max_length=100)
-    sensor_type = models.CharField(max_length=20, choices=SENSOR_TYPES)
-    apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE)
-    location = models.CharField(max_length=100)  # np. "kuchnia", "łazienka"
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-class SensorReading(models.Model):
-    sensor = models.ForeignKey(Sensor, on_delete=models.CASCADE)
-    value = models.FloatField()
-    unit = models.CharField(max_length=20)  # °C, %, m³, kWh
-    timestamp = models.DateTimeField(auto_now_add=True)
-    
 class UtilityConsumption(models.Model):
     UTILITY_TYPES = [
+        ('electricity', 'Prąd'),
         ('water', 'Woda'),
         ('gas', 'Gaz'),
-        ('electricity', 'Prąd'),
         ('heating', 'Ogrzewanie'),
     ]
-    
-    apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE)
-    utility_type = models.CharField(max_length=20, choices=UTILITY_TYPES)
-    consumption = models.FloatField()
-    month = models.DateField()
-    cost_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
-    total_cost = models.DecimalField(max_digits=10, decimal_places=2)
+
+    apartment = models.ForeignKey(
+        Apartment, 
+        on_delete=models.CASCADE,
+        related_name='utility_consumption',
+        verbose_name='Mieszkanie'
+    )
+    period_start = models.DateField(
+        verbose_name='Początek okresu'
+    )
+    period_end = models.DateField(
+        verbose_name='Koniec okresu'
+    )
+    utility_type = models.CharField(
+        max_length=20, 
+        choices=UTILITY_TYPES,
+        verbose_name='Rodzaj medium'
+    )
+    consumption = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        verbose_name='Zużycie'
+    )
+    unit = models.CharField(
+        max_length=10,
+        verbose_name='Jednostka',
+        help_text='np. kWh, m³'
+    )
+    cost = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='Koszt',
+        default=0.00
+    )
+
+    class Meta:
+        verbose_name = 'Zużycie mediów'
+        verbose_name_plural = 'Zużycie mediów'
+        ordering = ['-period_start']
+        unique_together = ['apartment', 'period_start', 'utility_type']
+
+    def __str__(self):
+        return f'{self.get_utility_type_display()} - {self.consumption} {self.unit} ({self.period_start.strftime("%Y-%m-%d")} do {self.period_end.strftime("%Y-%m-%d")})'    
+
 
 class MaintenanceRequest(models.Model):
-    PRIORITY_CHOICES = [
-        ('low', 'Niski'),
-        ('medium', 'Średni'),
-        ('high', 'Wysoki'),
-        ('emergency', 'Pilny'),
+    NEW = 'new'
+    SCHEDULED = 'scheduled'
+    IN_PROGRESS = 'in_progress'
+    COMPLETED = 'completed'
+    CANCELLED = 'cancelled'
+
+    STATUS_CHOICES = [
+        (NEW, 'Nowe'),
+        (SCHEDULED, 'Zaplanowane'),
+        (IN_PROGRESS, 'W trakcie'),
+        (COMPLETED, 'Zakończone'),
+        (CANCELLED, 'Anulowane'),
     ]
-    
-    apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE)
-    title = models.CharField(max_length=200)
-    description = models.TextField()
-    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES)
-    created_at = models.DateTimeField(auto_now_add=True)
-    resolved_at = models.DateTimeField(null=True, blank=True)
-    
+
+    PRIORITY_CHOICES = [
+        (1, 'Niska'),
+        (2, 'Średnia'),
+        (3, 'Wysoka'),
+        (4, 'Krytyczna'),
+    ]
+
+    apartment = models.ForeignKey(
+        Apartment, 
+        on_delete=models.CASCADE,
+        related_name='maintenance_requests',
+        verbose_name='Mieszkanie'
+    )
+    title = models.CharField(
+        max_length=200,
+        verbose_name='Tytuł'
+    )
+    description = models.TextField(
+        verbose_name='Opis'
+    )
+    status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES,
+        default=NEW,
+        verbose_name='Status'
+    )
+    priority = models.IntegerField(
+        choices=PRIORITY_CHOICES,
+        default=2,
+        verbose_name='Priorytet'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Data utworzenia'
+    )
+    scheduled_date = models.DateField(
+        null=True, 
+        blank=True,
+        verbose_name='Planowana data'
+    )
+    completed_date = models.DateTimeField(
+        null=True, 
+        blank=True,
+        verbose_name='Data zakończenia'
+    )
+    estimated_cost = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        null=True, 
+        blank=True,
+        verbose_name='Szacowany koszt'
+    )
+
+    class Meta:
+        verbose_name = 'Zlecenie konserwacji'
+        verbose_name_plural = 'Zlecenia konserwacji'
+        ordering = ['-priority', '-created_at']
+
+    def __str__(self):
+        return f'Zgłoszenie: {self.title}'
+
+
 class BuildingAlert(models.Model):
     ALERT_TYPES = [
-        ('consumption_high', 'Wysokie zużycie'),
-        ('sensor_malfunction', 'Awaria sensora'),
-        ('maintenance_due', 'Wymagana konserwacja'),
-        ('payment_overdue', 'Zaległość w płatnościach'),
+        ('maintenance', 'Konserwacja'),
+        ('security', 'Bezpieczeństwo'),
+        ('utility', 'Media'),
+        ('payment', 'Płatności'),
+        ('other', 'Inne'),
     ]
-    
-    alert_type = models.CharField(max_length=30, choices=ALERT_TYPES)
-    message = models.TextField()
-    apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE, null=True)
-    is_resolved = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+
+    SEVERITY_CHOICES = [
+        ('info', 'Informacja'),
+        ('warning', 'Ostrzeżenie'),
+    ]
+
+    apartment = models.ForeignKey(
+        Apartment, 
+        on_delete=models.CASCADE,
+        related_name='alerts',
+        null=True,
+        blank=True,
+        verbose_name='Mieszkanie'
+    )
+    title = models.CharField(
+        max_length=200,
+        verbose_name='Tytuł'
+    )
+    message = models.TextField(
+        verbose_name='Treść'
+    )
+    alert_type = models.CharField(
+        max_length=20,
+        choices=ALERT_TYPES,
+        verbose_name='Typ alertu'
+    )
+    severity = models.CharField(
+        max_length=20,
+        choices=SEVERITY_CHOICES,
+        default='info',
+        verbose_name='Ważność'
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name='Aktywny'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Data utworzenia'
+    )
+    expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Data wygaśnięcia'
+    )
+
+    class Meta:
+        verbose_name = 'Alert budynku'
+        verbose_name_plural = 'Alerty budynku'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.title} ({self.get_severity_display()})'
+
+
+

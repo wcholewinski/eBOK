@@ -1,26 +1,86 @@
 # eBOK — Elektroniczne Biuro Obsługi Klienta
 
 ## Opis projektu
-Aplikacja webowa stworzona w Django, służąca do zarządzania budynkiem wielorodzinnym.  
-Zapewnia dwa panele dostępu:  
-- **Panel administratora** (właściciel budynku) — do zarządzania mieszkaniami i mieszkańcami.  
-- **Panel lokatora** — pozwala lokatorowi na podgląd danych dotyczących jego mieszkania i opłat.
+Aplikacja webowa stworzona w Django, służąca do zarządzania budynkiem wielorodzinnym z integracją danych eksploatacyjnych i analizą predykcyjną.
 
-## Podstawowe funkcjonalności
-- Administrator zarządza listą mieszkań (numer, piętro, powierzchnia) oraz opłatami (czynsz, śmieci, woda, gaz).
-- Każde mieszkanie może mieć jednego lokatora (osobę podpisującą umowę najmu).
-- W mieszkaniu może mieszkać od jednej do kilku osób (lokatorzy + pozostali mieszkańcy).
-- Lokatorzy widzą tylko dane swojego mieszkania i powiązane opłaty.
-- Administrator ma wyłączne prawo do edycji danych i dostępu do wszystkich mieszkań.
+Zapewnia dwa panele dostępu:
+- **Panel administratora** (właściciel budynku) — do zarządzania mieszkaniami, mieszkańcami i analizami predykcyjnymi.
+- **Panel lokatora** — pozwala lokatorowi na podgląd danych dotyczących jego mieszkania, zużycia mediów i opłat.
 
-## Technologie
-- Python 3.x  
-- Django  
-- Baza danych SQLite (na start)
-- Funkcjonalności AI i ML
+## Funkcjonalności
 
-## Założenia projektu
-Ma służyć jako podstawa do dalszego rozwoju i rozbudowy systemu zarządzania .
+### Podstawowe
+- Zarządzanie mieszkaniami i lokatorami
+- System opłat i płatności
+- Zgłoszenia serwisowe i awarie
 
----
+### Zaawansowane
+- Analiza predykcyjna zużycia mediów
+- Predykcja kosztów utrzymania mieszkań
+
+## Wymagania
+
+- Python 3.11 lub nowszy
+- Django 4.2.7
+- Inne zależności wymienione w pliku `requirements.txt`
+
+## Instrukcje instalacji
+
+### 1. Klonowanie repozytorium
+
+```bash
+git clone https://github.com/twoje-konto/ebok.git
+cd ebok
+```
+
+### 2. Konfiguracja środowiska
+
+#### Dla systemów Linux/macOS:
+
+```bash
+# Nadaj uprawnienia wykonywania dla skryptu
+chmod +x setup.sh
+
+# Uruchom skrypt konfiguracyjny
+./setup.sh
+```
+
+#### Dla systemów Windows:
+
+```bash
+# Utwórz wirtualne środowisko
+python -m venv .venv1
+
+# Aktywuj wirtualne środowisko
+.venv1\Scripts\activate
+
+# Zainstaluj zależności
+pip install -r requirements.txt
+
+# Wykonaj migracje
+python manage.py makemigrations app
+python manage.py migrate
+
+# Uruchom skrypt do generowania danych testowych
+python generate_test_data.py
+```
+
+### 3. Uruchomienie serwera
+
+```bash
+python manage.py runserver
+```
+
+Aplikacja będzie dostępna pod adresem: http://127.0.0.1:8000/
+
+## Dane logowania
+
+- **Administrator**: login: `admin`, hasło: `admin`
+- **Najemcy**: loginy `lokator1` do `lokator10`, hasła takie same jak loginy
+
+
+
+
+
+
 

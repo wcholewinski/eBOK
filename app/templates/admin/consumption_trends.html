@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}Trendy zużycia mediów{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <h2>Analiza trendów zużycia mediów</h2>
+      <p class="text-muted">Miesięczne zużycie i koszty mediów dla całego budynku</p>
+    </div>
+    <div class="col-md-4 text-end">
+      <button class="btn btn-outline-primary me-2">
+        <i class="fas fa-download me-2"></i>Eksportuj dane
+      </button>
+      <button class="btn btn-outline-secondary">
+        <i class="fas fa-print me-2"></i>Drukuj raport
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtry -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <form method="GET" class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Typ medium</label>
+          <select class="form-select" name="utility_type">
+            <option value="">Wszystkie</option>
+            <option value="electricity" {% if selected_utility == 'electricity' %}selected{% endif %}>Prąd</option>
+            <option value="water" {% if selected_utility == 'water' %}selected{% endif %}>Woda</option>
+            <option value="gas" {% if selected_utility == 'gas' %}selected{% endif %}>Gaz</option>
+            <option value="heating" {% if selected_utility == 'heating' %}selected{% endif %}>Ogrzewanie</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Okres</label>
+          <select class="form-select" name="period">
+            <option value="monthly" selected>Miesięcznie</option>
+            <option value="quarterly">Kwartalnie</option>
+            <option value="yearly">Rocznie</option>
+          </select>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary w-100">Zastosuj filtry</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Podsumowanie zużycia -->
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="card h-100 border-primary">
+        <div class="card-body text-center">
+          <h5 class="card-title text-primary">Prąd</h5>
+          <p class="display-5 mt-3">{{ total_electricity|floatformat:1 }}</p>
+          <p class="card-text">kWh łącznie</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card h-100 border-info">
+        <div class="card-body text-center">
+          <h5 class="card-title text-info">Woda</h5>
+          <p class="display-5 mt-3">{{ total_water|floatformat:1 }}</p>
+          <p class="card-text">m³ łącznie</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card h-100 border-danger">
+        <div class="card-body text-center">
+          <h5 class="card-title text-danger">Gaz</h5>
+          <p class="display-5 mt-3">{{ total_gas|floatformat:1 }}</p>
+          <p class="card-text">m³ łącznie</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card h-100 border-warning">
+        <div class="card-body text-center">
+          <h5 class="card-title text-warning">Ogrzewanie</h5>
+          <p class="display-5 mt-3">{{ total_heating|floatformat:1 }}</p>
+          <p class="card-text">kWh łącznie</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wykresy zużycia -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Zużycie mediów</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="consumptionChart" height="300"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Koszty mediów</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="costsChart" height="300"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Anomalie -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">Wykryte anomalie zużycia</h5>
+    </div>
+    <div class="card-body">
+      {% if anomalies %}
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Medium</th>
+              <th>Miesiąc</th>
+              <th>Wartość</th>
+              <th>Średnia</th>
+              <th>Odchylenie</th>
+              <th>Akcja</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for anomaly in anomalies %}
+            <tr>
+              <td>{{ anomaly.utility }}</td>
+              <td>{{ anomaly.month }}</td>
+              <td>{{ anomaly.value }}</td>
+              <td>{{ anomaly.avg }}</td>
+              <td class="text-danger">+{{ anomaly.percent }}%</td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary">Analizuj</button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-success">
+        <i class="fas fa-check-circle me-2"></i> Nie wykryto żadnych anomalii w zużyciu mediów.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Tabela szczegółowa -->
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Miesięczne zużycie mediów</h5>
+      <button class="btn btn-sm btn-outline-primary">
+        <i class="fas fa-download me-1"></i> Eksportuj do Excel
+      </button>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Miesiąc</th>
+              <th class="text-center">Prąd (kWh)</th>
+              <th class="text-center">Woda (m³)</th>
+              <th class="text-center">Gaz (m³)</th>
+              <th class="text-center">Ogrzewanie (kWh)</th>
+              <th class="text-end">Koszt całkowity</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in monthly_data %}
+            <tr>
+              <td>{{ item.month }}</td>
+              <td class="text-center">{{ item.electricity|floatformat:1 }}</td>
+              <td class="text-center">{{ item.water|floatformat:1 }}</td>
+              <td class="text-center">{{ item.gas|floatformat:1 }}</td>
+              <td class="text-center">{{ item.heating|floatformat:1 }}</td>
+              <td class="text-end">{{ item.total_cost|floatformat:2 }} zł</td>
+            </tr>
+            {% endfor %}
+            <tr class="table-primary">
+              <td><strong>Razem</strong></td>
+              <td class="text-center"><strong>{{ total_electricity|floatformat:1 }}</strong></td>
+              <td class="text-center"><strong>{{ total_water|floatformat:1 }}</strong></td>
+              <td class="text-center"><strong>{{ total_gas|floatformat:1 }}</strong></td>
+              <td class="text-center"><strong>{{ total_heating|floatformat:1 }}</strong></td>
+              <td class="text-end"><strong>{{ total_costs|floatformat:2 }} zł</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Wykres zużycia mediów
+    var consumptionCtx = document.getElementById('consumptionChart').getContext('2d');
+    var consumptionChart = new Chart(consumptionCtx, {
+      type: 'line',
+      data: {
+        labels: {{ consumption_chart_data.labels|safe }},
+        datasets: [
+          {
+            label: 'Prąd (kWh)',
+            data: {{ consumption_chart_data.electricity|safe }},
+            borderColor: 'rgba(54, 162, 235, 1)',
+            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+            borderWidth: 2,
+            tension: 0.1
+          },
+          {
+            label: 'Woda (m³)',
+            data: {{ consumption_chart_data.water|safe }},
+            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+            borderWidth: 2,
+            tension: 0.1
+          },
+          {
+            label: 'Gaz (m³)',
+            data: {{ consumption_chart_data.gas|safe }},
+            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+            borderWidth: 2,
+            tension: 0.1
+          },
+          {
+            label: 'Ogrzewanie (kWh)',
+            data: {{ consumption_chart_data.heating|safe }},
+            borderColor: 'rgba(255, 159, 64, 1)',
+            backgroundColor: 'rgba(255, 159, 64, 0.1)',
+            borderWidth: 2,
+            tension: 0.1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Zużycie'
+            }
+          }
+        }
+      }
+    });
+
+    // Wykres kosztów mediów
+    var costsCtx = document.getElementById('costsChart').getContext('2d');
+    var costsChart = new Chart(costsCtx, {
+      type: 'bar',
+      data: {
+        labels: {{ cost_chart_data.labels|safe }},
+        datasets: [
+          {
+            label: 'Prąd',
+            data: {{ cost_chart_data.electricity|safe }},
+            backgroundColor: 'rgba(54, 162, 235, 0.7)'
+          },
+          {
+            label: 'Woda',
+            data: {{ cost_chart_data.water|safe }},
+            backgroundColor: 'rgba(75, 192, 192, 0.7)'
+          },
+          {
+            label: 'Gaz',
+            data: {{ cost_chart_data.gas|safe }},
+            backgroundColor: 'rgba(255, 99, 132, 0.7)'
+          },
+          {
+            label: 'Ogrzewanie',
+            data: {{ cost_chart_data.heating|safe }},
+            backgroundColor: 'rgba(255, 159, 64, 0.7)'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            stacked: true
+          },
+          y: {
+            stacked: true,
+            title: {
+              display: true,
+              text: 'Koszt (zł)'
+            }
+          }
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                var label = context.dataset.label || '';
+                var value = context.raw || 0;
+                return label + ': ' + value.toFixed(2) + ' zł';
+              }
+            }
+          }
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}
+{% endblock %}

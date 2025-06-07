@@ -1,5 +1,143 @@
 {% extends "base.html" %}
+{% extends "base.html" %}
 
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4">{{ title }}</h2>
+
+  {% if message %}
+  <div class="alert alert-info" role="alert">
+    {{ message }}
+  </div>
+  {% endif %}
+
+  <div class="row">
+    <!-- Karty alertów -->
+    <div class="col-md-8">
+      <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+          <h5 class="mb-0">Alerty systemowe</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush">
+            {% for alert in alerts %}
+              <div class="list-group-item">
+                <div class="d-flex w-100 justify-content-between align-items-center">
+                  <div>
+                    <h5 class="mb-1">
+                      <span class="badge {% if alert.type == 'danger' %}bg-danger{% elif alert.type == 'warning' %}bg-warning{% elif alert.type == 'info' %}bg-info{% else %}bg-primary{% endif %}">{{ alert.type|upper }}</span>
+                      {% if alert.apartment %}
+                        Mieszkanie {{ alert.apartment.number }}
+                      {% endif %}
+                    </h5>
+                    <p class="mb-1">{{ alert.message }}</p>
+                    {% if alert.amount %}
+                      <p class="mb-0"><strong>Kwota:</strong> {{ alert.amount }} zł</p>
+                    {% endif %}
+                    {% if alert.action %}
+                      <small class="text-muted">{{ alert.action }}</small>
+                    {% endif %}
+                  </div>
+                  <div>
+                    <button class="btn btn-sm btn-outline-secondary">Szczegóły</button>
+                  </div>
+                </div>
+              </div>
+            {% empty %}
+              <div class="list-group-item">
+                <p class="text-center my-3">Brak aktywnych alertów systemowych</p>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Alerty z bazy danych -->
+      <div class="card">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0">Alerty budynku</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush">
+            {% for alert in db_alerts %}
+              <div class="list-group-item">
+                <div class="d-flex w-100 justify-content-between">
+                  <div>
+                    <h5 class="mb-1">
+                      <span class="badge {% if alert.severity == 'warning' %}bg-warning{% else %}bg-info{% endif %}">
+                        {{ alert.get_severity_display }}
+                      </span>
+                      {{ alert.title }}
+                    </h5>
+                    <p class="mb-1">{{ alert.message }}</p>
+                    <small class="text-muted">
+                      Typ: {{ alert.get_alert_type_display }} | 
+                      Utworzono: {{ alert.created_at|date:"d.m.Y H:i" }}
+                      {% if alert.apartment %}
+                      | Mieszkanie: {{ alert.apartment.number }}
+                      {% endif %}
+                    </small>
+                  </div>
+                  <div>
+                    <button class="btn btn-sm btn-outline-secondary">Zarządzaj</button>
+                  </div>
+                </div>
+              </div>
+            {% empty %}
+              <div class="list-group-item">
+                <p class="text-center my-3">Brak aktywnych alertów budynku</p>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel boczny -->
+    <div class="col-md-4">
+      <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Szybkie akcje</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <a href="#" class="btn btn-outline-primary">Dodaj nowy alert</a>
+            <a href="#" class="btn btn-outline-primary">Zaplanuj przegląd</a>
+            <a href="#" class="btn btn-outline-primary">Zarządzaj płatnościami</a>
+            <a href="#" class="btn btn-outline-primary">Zgłoszenia serwisowe</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">Statystyki alertów</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <span class="badge bg-info">Informacje</span> {{ db_alerts|dictsortby:"severity"|dictsort:"info"|length }}
+          </div>
+          <div class="mb-3">
+            <span class="badge bg-warning">Ostrzeżenia</span> {{ db_alerts|dictsortby:"severity"|dictsort:"warning"|length }}
+          </div>
+          <div class="mb-4">
+            <span class="badge bg-danger">Zaległe płatności</span> {{ alerts|dictsortby:"type"|dictsort:"warning"|length }}
+          </div>
+
+          <div class="progress mb-2" style="height: 20px;">
+            <div class="progress-bar bg-success" style="width: 35%" title="Rozwiązane">35%</div>
+            <div class="progress-bar bg-warning" style="width: 45%" title="W trakcie">45%</div>
+            <div class="progress-bar bg-danger" style="width: 20%" title="Nowe">20%</div>
+          </div>
+          <small class="text-muted">Status rozwiązania alertów</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
 {% block title %}System alertów - eBOK{% endblock %}
 
 {% block content %}
@@ -25,30 +163,13 @@
 
     <!-- Typy alertów -->
     <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card border-danger">
-                <div class="card-header bg-danger text-white">
-                    <h6 class="mb-0">🚨 Alerty krytyczne</h6>
-                </div>
-                <div class="card-body">
-                    <ul class="list-unstyled">
-                        <li>💧 <strong>Wyciek wody</strong> - natychmiastowe powiadomienie</li>
-                        <li>🔥 <strong>Awaria gazu</strong> - alert bezpieczeństwa</li>
-                        <li>⚡ <strong>Problemy elektryczne</strong> - ryzyko awarii</li>
-                        <li>🏠 <strong>Włamanie/alarm</strong> - bezpieczeństwo budynku</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6">
+        <div class="col-md-12">
             <div class="card border-warning">
                 <div class="card-header bg-warning text-dark">
                     <h6 class="mb-0">⚠️ Alerty ostrzegawcze</h6>
                 </div>
                 <div class="card-body">
                     <ul class="list-unstyled">
-                        <li>📊 <strong>Wysokie zużycie</strong> - przekroczenie norm</li>
                         <li>💰 <strong>Zaległe płatności</strong> - przypomnienia</li>
                         <li>🔧 <strong>Konieczna konserwacja</strong> - przeglądy</li>
                         <li>📋 <strong>Nowe zgłoszenia</strong> - od lokatorów</li>
@@ -67,16 +188,7 @@
     </div>
     {% else %}
         {% for alert in db_alerts %}
-            {% if alert.severity == 'critical' %}
-                <div class="alert alert-danger d-flex align-items-center mb-3">
-                    <div class="me-3">🚨</div>
-                    <div>
-                        <strong>ALERT KRYTYCZNY:</strong> {{ alert.title }}
-                        <p class="mb-0">{{ alert.message }}</p>
-                        <small class="text-muted">Utworzono: {{ alert.created_at|date:"d.m.Y H:i" }}</small>
-                    </div>
-                </div>
-            {% elif alert.severity == 'warning' %}
+            {% if alert.severity == 'warning' %}
                 <div class="alert alert-warning d-flex align-items-center mb-3">
                     <div class="me-3">⚠️</div>
                     <div>
@@ -117,7 +229,7 @@
                     <div class="text-center p-3 border rounded">
                         <h6>📱 SMS</h6>
                         <p class="small text-muted">
-                            Pilne alerty SMS w przypadku krytycznych sytuacji
+                            Alerty SMS w przypadku ważnych powiadomień
                         </p>
                     </div>
                 </div>
@@ -152,10 +264,6 @@
                             <label class="form-check-label">Powiadomienia o nowych zgłoszeniach</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" checked name="admin_consumption">
-                            <label class="form-check-label">Alerty o wysokim zużyciu mediów</label>
-                        </div>
-                        <div class="form-check">
                             <input class="form-check-input" type="checkbox" checked name="admin_maintenance">
                             <label class="form-check-label">Powiadomienia serwisowe</label>
                         </div>
@@ -172,10 +280,6 @@
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" checked name="tenant_tickets">
                             <label class="form-check-label">Status zgłoszeń serwisowych</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" checked name="tenant_consumption">
-                            <label class="form-check-label">Wysokie zużycie mediów</label>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" checked name="tenant_building">

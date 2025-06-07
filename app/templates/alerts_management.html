@@ -1,10 +1,183 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+
+{% extends "base.html" %}
+
+{% block title %}System alertów - eBOK{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>🚨 System alertów i powiadomień</h2>
+        <a href="{% url 'app:analytics_dashboard' %}" class="btn btn-outline-secondary">
+            ← Powrót do analityki
+        </a>
+    </div>
+
+    <!-- Komunikat o rozwoju -->
+    <div class="alert alert-warning border-start border-4 border-warning">
+        <div class="d-flex">
+            <div>
+                <h5 class="alert-heading">🚧 Funkcjonalność w przygotowaniu</h5>
+                <p>{{ message }}</p>
+                <hr>
+                <p class="mb-0">
+                    <strong>System alertów w eBOK będzie obejmował:</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Typy alertów -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h6 class="mb-0">🚨 Alerty krytyczne</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li>💧 <strong>Wyciek wody</strong> - natychmiastowe powiadomienie</li>
+                        <li>🔥 <strong>Awaria gazu</strong> - alert bezpieczeństwa</li>
+                        <li>⚡ <strong>Problemy elektryczne</strong> - ryzyko awarii</li>
+                        <li>🏠 <strong>Włamanie/alarm</strong> - bezpieczeństwo budynku</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">⚠️ Alerty ostrzegawcze</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li>📊 <strong>Wysokie zużycie</strong> - przekroczenie norm</li>
+                        <li>💰 <strong>Zaległe płatności</strong> - przypomnienia</li>
+                        <li>🔧 <strong>Konieczna konserwacja</strong> - przeglądy</li>
+                        <li>📋 <strong>Nowe zgłoszenia</strong> - od lokatorów</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kanały powiadomień -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">📢 Kanały powiadomień</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="text-center p-3 border rounded">
+                        <h6>📧 Email</h6>
+                        <p class="small text-muted">
+                            Automatyczne powiadomienia email dla administratorów i lokatorów
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center p-3 border rounded">
+                        <h6>📱 SMS</h6>
+                        <p class="small text-muted">
+                            Pilne alerty SMS w przypadku krytycznych sytuacji
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center p-3 border rounded">
+                        <h6>🔔 Panel eBOK</h6>
+                        <p class="small text-muted">
+                            Powiadomienia w interfejsie systemu eBOK
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Konfiguracja alertów -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">⚙️ Konfiguracja systemu alertów</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-primary">🎯 Dla administratorów:</h6>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked disabled>
+                        <label class="form-check-label">Alerty o zaległych płatnościach</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked disabled>
+                        <label class="form-check-label">Powiadomienia o nowych zgłoszeniach</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked disabled>
+                        <label class="form-check-label">Alerty o wysokim zużyciu mediów</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked disabled>
+                        <label class="form-check-label">Powiadomienia serwisowe</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-success">🏠 Dla lokatorów:</h6>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked disabled>
+                        <label class="form-check-label">Przypomnienia o płatnościach</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked disabled>
+                        <label class="form-check-label">Status zgłoszeń serwisowych</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked disabled>
+                        <label class="form-check-label">Wysokie zużycie mediów</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked disabled>
+                        <label class="form-check-label">Awarie w budynku</label>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-3">
+                <small class="text-muted">
+                    <em>💡 Konfiguracja będzie dostępna po wdrożeniu systemu alertów</em>
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Przykładowe alerty -->
+    <div class="card mt-4 bg-light">
+        <div class="card-header">
+            <h5 class="mb-0">📋 Przykładowe alerty systemowe</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-danger d-flex align-items-center">
+                <div class="me-3">🚨</div>
+                <div>
+                    <strong>ALERT KRYTYCZNY:</strong> Wykryto wyciek wody w mieszkaniu 15 na 3. piętrze.
+                    <small class="text-muted">(Przykład - system nie jest jeszcze aktywny)</small>
+                </div>
+            </div>
+            <div class="alert alert-warning d-flex align-items-center">
+                <div class="me-3">⚠️</div>
+                <div>
+                    <strong>OSTRZEŻENIE:</strong> Mieszkanie 8 przekroczyło normę zużycia prądu o 25% w tym miesiącu.
+                    <small class="text-muted">(Przykład - system nie jest jeszcze aktywny)</small>
+                </div>
+            </div>
+            <div class="alert alert-info d-flex align-items-center">
+                <div class="me-3">ℹ️</div>
+                <div>
+                    <strong>INFORMACJA:</strong> Zaplanowany przegląd techniczny budynku w dniu 15.06.2025.
+                    <small class="text-muted">(Przykład - system nie jest jeszcze aktywny)</small>
+                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endblock %}

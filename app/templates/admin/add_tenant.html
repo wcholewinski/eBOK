@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Dodaj najemcę{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4">Dodaj najemcę</h2>
+
+  <form method="post" class="mb-3">
+    {% csrf_token %}
+    <div class="mb-3">
+      <h4>Informacje o najemcy</h4>
+      {{ form.as_p }}
+    </div>
+
+    <div class="row mt-4">
+      <div class="col-md-12">
+        <h5>Dostępne mieszkania:</h5>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Numer</th>
+                <th>Piętro</th>
+                <th>Powierzchnia</th>
+                <th>Czynsz</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for apartment in apartments %}
+              <tr>
+                <td>{{ apartment.number }}</td>
+                <td>{{ apartment.floor }}</td>
+                <td>{{ apartment.area }} m²</td>
+                <td>{{ apartment.rent }} PLN</td>
+                <td>
+                  {% if apartment.tenants.all %}
+                    <span class="badge bg-warning">Zajęte</span>
+                  {% else %}
+                    <span class="badge bg-success">Dostępne</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-success mt-3">Dodaj najemcę</button>
+    <a href="{% url 'app:admin_dashboard' %}" class="btn btn-secondary ms-2 mt-3">Anuluj</a>
+  </form>
+</div>
+{% endblock %}

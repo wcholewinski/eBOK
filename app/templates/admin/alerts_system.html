@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}System alertów{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4">System alertów i powiadomień</h2>
+
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Panel monitorowania</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3 mb-3">
+              <div class="card text-center h-100">
+                <div class="card-body">
+                  <i class="fas fa-home fa-3x mb-3 text-primary"></i>
+                  <h5 class="card-title">Mieszkania</h5>
+                  <p class="card-text display-6">{{ alerts.0.vacant_apartments|default:"0" }}</p>
+                  <p class="card-text small text-muted">Puste mieszkania</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="card text-center h-100">
+                <div class="card-body">
+                  <i class="fas fa-file-contract fa-3x mb-3 text-warning"></i>
+                  <h5 class="card-title">Umowy</h5>
+                  <p class="card-text display-6">{{ alerts.1.expiring_contracts|default:"0" }}</p>
+                  <p class="card-text small text-muted">Wygasają w ciągu 30 dni</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="card text-center h-100">
+                <div class="card-body">
+                  <i class="fas fa-money-bill-wave fa-3x mb-3 text-danger"></i>
+                  <h5 class="card-title">Płatności</h5>
+                  <p class="card-text display-6">{{ alerts.2.overdue_payments|default:"0" }}</p>
+                  <p class="card-text small text-muted">Zaległe płatności</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="card text-center h-100">
+                <div class="card-body">
+                  <i class="fas fa-ticket-alt fa-3x mb-3 text-primary"></i>
+                  <h5 class="card-title">Zgłoszenia</h5>
+                  <p class="card-text display-6">{{ alerts.3.new_tickets|default:"0" }}</p>
+                  <p class="card-text small text-muted">Nowe zgłoszenia</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Aktualne alerty</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush">
+            {% for alert in alerts %}
+              <div class="list-group-item list-group-item-action p-3">
+                <div class="d-flex w-100 justify-content-between">
+                  <h5 class="mb-1">
+                    <span class="badge bg-{{ alert.type }}">{{ alert.type|title }}</span>
+                    {{ alert.message }}
+                  </h5>
+                </div>
+                <p class="mb-1">{{ alert.action }}</p>
+              </div>
+            {% empty %}
+              <div class="list-group-item">
+                <p class="text-muted text-center my-3">Brak aktywnych alertów. Wszystko działa prawidłowo!</p>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">Szybkie akcje</h5>
+        </div>
+        <div class="card-body">
+          <div class="list-group">
+            <a href="{% url 'app:admin_tickets' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              Zgłoszenia serwisowe
+              <span class="badge bg-primary rounded-pill">{{ alerts.3.new_tickets|default:"0" }}</span>
+            </a>
+            <a href="{% url 'app:admin_payments' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              Zaległe płatności
+              <span class="badge bg-danger rounded-pill">{{ alerts.2.overdue_payments|default:"0" }}</span>
+            </a>
+            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              Zarządzanie umowami
+              <span class="badge bg-warning rounded-pill">{{ alerts.1.expiring_contracts|default:"0" }}</span>
+            </a>
+            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              Przeglądy techniczne
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0">Statystyki</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="alertsChart" width="100%" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var ctx = document.getElementById('alertsChart').getContext('2d');
+    var myChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Puste mieszkania', 'Kończące się umowy', 'Zaległe płatności', 'Nowe zgłoszenia'],
+        datasets: [{
+          data: [
+            {{ alerts.0.vacant_apartments|default:"0" }}, 
+            {{ alerts.1.expiring_contracts|default:"0" }}, 
+            {{ alerts.2.overdue_payments|default:"0" }}, 
+            {{ alerts.3.new_tickets|default:"0" }}
+          ],
+          backgroundColor: [
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(255, 206, 86, 0.7)',
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(75, 192, 192, 0.7)'
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}
+{% endblock %}
