@@ -61,9 +61,7 @@ pip install -r requirements.txt
 python manage.py makemigrations app
 python manage.py migrate
 
-# Uruchom skrypt do generowania danych testowych
-python generate_test_data.py
-```
+
 
 ### 3. Uruchomienie serwera
 
