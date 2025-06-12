@@ -1,7 +1,6 @@
 # Pakiet z funkcjami pomocniczymi dla aplikacji eBOK
 # Ten plik jest wymagany, aby katalog utils był traktowany jako pakiet Python
 
-# Import tylko wtedy gdy faktycznie potrzebny
 def calculate_statistics(apartment_id):
     """
     Oblicza podstawowe statystyki dla mieszkania o podanym ID.
@@ -14,8 +13,7 @@ def calculate_statistics(apartment_id):
         apartment = Apartment.objects.get(id=apartment_id)
     except Apartment.DoesNotExist:
         return {'error': f'Mieszkanie o ID {apartment_id} nie istnieje'}
-# Pakiet z funkcjami pomocniczymi dla aplikacji eBOK
-# Ten plik jest wymagany, aby katalog utils był traktowany jako pakiet Python
+
     # Historia płatności
     payment_history = []
     for tenant in Tenant.objects.filter(apartment_id=apartment_id):

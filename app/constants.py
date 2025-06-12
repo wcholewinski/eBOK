@@ -1,52 +1,54 @@
 """Stałe używane w aplikacji"""
+# Stałe dla płatności
+PENDING = 'pending'
+PAID = 'paid'
 
-# Statusy płatności
-PAYMENT_STATUS = (
-    ('pending', 'Oczekująca'),
-    ('paid', 'Opłacona'),
-    ('canceled', 'Anulowana'),
-)
+PAYMENT_STATUS = [
+    (PENDING, 'Oczekująca'),
+    (PAID, 'Opłacona'),
+]
 
-# Typy płatności
-PAYMENT_TYPES = (
+PAYMENT_TYPES = [
     ('rent', 'Czynsz'),
-    ('trash', 'Śmieci'),
     ('water', 'Woda'),
     ('gas', 'Gaz'),
     ('electricity', 'Prąd'),
+    ('garbage', 'Śmieci'),
+    ('heating', 'Ogrzewanie'),
     ('other', 'Inne'),
-)
+]
 
-# Statusy zgłoszeń
-TICKET_STATUS = (
-    ('new', 'Nowe'),
-    ('in_progress', 'W realizacji'),
-    ('waiting', 'Oczekujące'),
-    ('closed', 'Zakończone'),
-)
+# Stałe dla zgłoszeń
+NEW = 'new'
+IN_PROGRESS = 'in_progress'
+CLOSED = 'closed'
 
-# Priorytety zgłoszeń
-TICKET_PRIORITIES = (
+TICKET_STATUS = [
+    (NEW, 'Nowe'),
+    (IN_PROGRESS, 'W realizacji'),
+    (CLOSED, 'Zamknięte'),
+]
+
+TICKET_PRIORITIES = [
     ('low', 'Niski'),
     ('medium', 'Średni'),
     ('high', 'Wysoki'),
-    ('critical', 'Krytyczny'),
-)
+]
 
-# Typy mediów
-UTILITY_TYPES = (
+# Stałe dla mediów
+UTILITY_TYPES = [
     ('electricity', 'Prąd'),
     ('water', 'Woda'),
     ('gas', 'Gaz'),
     ('heating', 'Ogrzewanie'),
-)
+]
 
-# Jednostki zużycia
-UTILITY_UNITS = (
+UTILITY_UNITS = [
     ('kWh', 'kWh'),
     ('m3', 'm³'),
     ('GJ', 'GJ'),
-)
+]
+
 
 # Typy alertów budynkowych
 ALERT_TYPES = (

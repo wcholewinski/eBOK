@@ -8,6 +8,7 @@ from app.views.views_main import (
     alerts_management, alerts_system, apartment_list, apartment_detail,
     tenant_list, tenant_detail, payment_list, payment_detail, ticket_detail
 )
+from app.views.admin_views import delete_all_tenants_and_apartments
 from app.views.admin_views import (
     delete_apartment, edit_tenant, delete_tenant, bulk_delete_apartments, bulk_delete_tenants,
     delete_all_tenants_and_apartments
@@ -84,7 +85,9 @@ urlpatterns = [
     path('admin-panel/ml-import/', ml_import_view.import_and_analyze, name='import_and_analyze'),
 
     # Alerts system
+        path('admin-panel/', admin_dashboard, name='admin_dashboard'),  # Upewniam się, że ta ścieżka istnieje
     path('admin-panel/alerts/', alerts_management, name='alerts_management'),
+        path('admin-panel/reset-data/', delete_all_tenants_and_apartments, name='delete_all_data'),
     path('alerts-system/', alerts_system, name='alerts_system'),
 
     # Sensor management

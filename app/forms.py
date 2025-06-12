@@ -106,13 +106,6 @@ class CSVImportForm(forms.Form):
         label="Wybierz plik CSV",
         help_text="Obsługiwane formaty: CSV z separatorem przecinka, średnika lub tabulatora."
     )
-
-
-class AdvancedCSVImportForm(forms.Form):
-    csv_file = forms.FileField(
-        label="Wybierz plik CSV",
-        help_text="Obsługiwane formaty: CSV z separatorem przecinka, średnika lub tabulatora."
-    )
     model_type = forms.ChoiceField(
         label="Typ danych",
         choices=[
@@ -120,7 +113,8 @@ class AdvancedCSVImportForm(forms.Form):
             ('utility_consumption', 'Zużycie mediów'),
             ('payment', 'Płatności')
         ],
-        help_text="Wybierz typ danych do importu"
+        help_text="Wybierz typ danych do importu",
+        required=False
     )
     date_format = forms.ChoiceField(
         label="Format daty",
@@ -131,7 +125,8 @@ class AdvancedCSVImportForm(forms.Form):
             ('%m/%d/%Y', 'MM/DD/RRRR')
         ],
         help_text="Wybierz format daty używany w pliku CSV",
-        initial='%Y-%m-%d'
+        initial='%Y-%m-%d',
+        required=False
     )
     has_header = forms.BooleanField(
         label="Plik zawiera nagłówki",
@@ -139,7 +134,3 @@ class AdvancedCSVImportForm(forms.Form):
         required=False,
         help_text="Zaznacz, jeśli pierwszy wiersz pliku zawiera nazwy kolumn"
     )
-
-
-class UtilityConsumptionImportForm(forms.Form):
-    csv_file = forms.FileField(label="Wybierz plik CSV z danymi zużycia")

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Reset danych systemu{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">⚠️ Resetowanie danych systemu</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning border-start border-4 border-warning">
+                        <h5 class="alert-heading">Uwaga! Operacja nieodwracalna!</h5>
+                        <p>Zamierzasz usunąć wszystkich lokatorów i wszystkie mieszkania z systemu. Ta operacja jest nieodwracalna i spowoduje trwałe usunięcie:</p>
+                        <ul>
+                            <li>Wszystkich kont lokatorów</li>
+                            <li>Wszystkich przypisanych danych do lokatorów (płatności, zgłoszenia)</li>
+                            <li>Wszystkich mieszkań i ich danych</li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-4">
+                        <h5>Podsumowanie danych do usunięcia:</h5>
+                        <div class="row mt-3">
+                            <div class="col-md-4">
+                                <div class="card text-center mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Lokatorzy</h6>
+                                        <p class="card-text display-6 text-danger">{{ tenants_count }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card text-center mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Mieszkania</h6>
+                                        <p class="card-text display-6 text-danger">{{ apartments_count }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card text-center mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Zgłoszenia i płatności</h6>
+                                        <p class="card-text display-6 text-danger">{{ payments_tickets_count }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form action="{% url 'app:delete_all_data' %}" method="post" class="mt-4" id="resetForm">
+                        {% csrf_token %}
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="confirmReset" required>
+                            <label class="form-check-label" for="confirmReset">
+                                Potwierdzam, że rozumiem konsekwencje tej operacji i chcę usunąć wszystkie dane.
+                            </label>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'app:admin_dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Anuluj i wróć do panelu
+                            </a>
+                            <button type="submit" class="btn btn-danger" id="resetButton" disabled>
+                                <i class="fas fa-trash-alt"></i> Usuń wszystkie dane
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('confirmReset').addEventListener('change', function() {
+        document.getElementById('resetButton').disabled = !this.checked;
+    });
+</script>
+{% endblock %}

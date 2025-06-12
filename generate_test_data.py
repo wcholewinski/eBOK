@@ -225,14 +225,15 @@ alert_messages = [
 ]
 
 for i in range(5):
-    future_date = today + timedelta(days=random.randint(10, 60))
+    # Używamy timezone.now() zamiast zwykłego datetime aby uniknąć ostrzeżeń o naiwnych datach
+    future_date = timezone.now() + timedelta(days=random.randint(10, 60))
     BuildingAlert.objects.create(
         title=alert_titles[i],
         message=alert_messages[i],
         alert_type=random.choice(['maintenance', 'security', 'utility', 'payment', 'other']),
         severity=random.choice(['info', 'warning']),
         is_active=True,
-        created_at=today - timedelta(days=random.randint(0, 5)),
+        created_at=timezone.now() - timedelta(days=random.randint(0, 5)),
         expires_at=future_date
     )
 
@@ -261,8 +262,7 @@ for i in range(8):
     scheduled_date = created_date + timedelta(days=random.randint(3, 14)) if status != 'new' else None
     completed_date = scheduled_date + timedelta(days=random.randint(1, 5)) if status == 'completed' else None
 
-    # Zawsze przypisujemy zlecenie do mieszkania, gdyż pole apartment jest wymagane
-    apartment = random.choice(apartments)
+    apartment = random.choice(apartments) if random.random() < 0.5 else None  # 50% zleceń przypisanych do konkretnego mieszkania
 
     MaintenanceRequest.objects.create(
         apartment=apartment,

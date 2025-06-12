@@ -161,25 +161,42 @@ def bulk_delete_tenants(request):
 @admin_required
 def delete_all_tenants_and_apartments(request):
     """Usuwa wszystkich lokatorów i mieszkania z systemu"""
+    # Import modeli
+    from app.models import Apartment, Tenant, Payment, Ticket
+    from django.contrib import messages
+    from django.shortcuts import render, redirect
+
+    # Pobierz statystyki
+    tenants_count = Tenant.objects.count()
+    apartments_count = Apartment.objects.count()
+    payments_count = Payment.objects.count()
+    tickets_count = Ticket.objects.count()
+    payments_tickets_count = payments_count + tickets_count
+
     if request.method == 'POST':
         # Pobierz wszystkich lokatorów
         tenants = Tenant.objects.all().select_related('user')
-        tenants_count = tenants.count()
 
         # Usuń wszystkich lokatorów i ich konta użytkowników
         for tenant in tenants:
             user = tenant.user
             tenant.delete()
-            user.delete()
+            # Upewnij się, że nie usuwamy konta administratora
+            if not user.is_staff and not user.is_superuser:
+                user.delete()
 
         # Usuń wszystkie mieszkania
-        apartments_count = Apartment.objects.count()
         Apartment.objects.all().delete()
 
         messages.success(request, f'Usunięto wszystkie dane: {tenants_count} lokatorów i {apartments_count} mieszkań.')
         return redirect('app:admin_dashboard')
 
-    return redirect('app:admin_dashboard')
+    context = {
+        'tenants_count': tenants_count,
+        'apartments_count': apartments_count,
+        'payments_tickets_count': payments_tickets_count,
+    }
+    return render(request, 'admin/reset_data.html', context)
 @admin_required
 def admin_dashboard(request):
     """Główny dashboard administratora"""

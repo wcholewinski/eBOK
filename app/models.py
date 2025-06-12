@@ -1,6 +1,11 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
+from app.constants import (
+    PAYMENT_TYPES, PAYMENT_STATUS, PENDING,
+    TICKET_STATUS, TICKET_PRIORITIES, NEW,
+    UTILITY_TYPES, UTILITY_UNITS
+)
 
 
 class Apartment(models.Model):
@@ -87,22 +92,9 @@ class Tenant(models.Model):
 
 
 class Payment(models.Model):
-    RENT = 'rent'
-    GARBAGE = 'garbage'
-    WATER = 'water'
-    GAS = 'gas'
-    PAYMENT_TYPES = [
-        (RENT,    'Czynsz'),
-        (GARBAGE, 'Śmieci'),
-        (WATER,   'Woda'),
-        (GAS,     'Gaz'),
-    ]
-    PENDING = 'pending'
-    PAID = 'paid'
-    STATUS_CHOICES = [
-        (PENDING, 'Oczekujące'),
-        (PAID,    'Opłacone'),
-    ]
+    PAYMENT_TYPES = PAYMENT_TYPES
+    STATUS_CHOICES = PAYMENT_STATUS
+
     tenant = models.ForeignKey(
         Tenant,
         on_delete=models.CASCADE,
@@ -119,7 +111,7 @@ class Payment(models.Model):
         verbose_name='Kwota (PLN)'
     )
     type = models.CharField(
-        max_length=10,
+        max_length=15,
         choices=PAYMENT_TYPES,
         verbose_name='Rodzaj płatności'
     )
@@ -140,19 +132,9 @@ class Payment(models.Model):
 
 
 class Ticket(models.Model):
-    NEW = 'new'
-    IN_PROGRESS = 'in_progress'
-    CLOSED = 'closed'
-    STATUS_CHOICES = [
-        (NEW,        'Nowe'),
-        (IN_PROGRESS,'W trakcie'),
-        (CLOSED,     'Zamknięte'),
-    ]
-    PRIORITY_CHOICES = [
-        ('low',     'Niski'),
-        ('medium',  'Średni'),
-        ('high',    'Wysoki'),
-    ]
+    STATUS_CHOICES = TICKET_STATUS
+    PRIORITY_CHOICES = TICKET_PRIORITIES
+
     tenant = models.ForeignKey(
         Tenant,
         on_delete=models.CASCADE,
@@ -197,12 +179,7 @@ class Ticket(models.Model):
 
 
 class UtilityConsumption(models.Model):
-    UTILITY_TYPES = [
-        ('electricity', 'Prąd'),
-        ('water', 'Woda'),
-        ('gas', 'Gaz'),
-        ('heating', 'Ogrzewanie'),
-    ]
+    UTILITY_TYPES = UTILITY_TYPES
 
     apartment = models.ForeignKey(
         Apartment, 

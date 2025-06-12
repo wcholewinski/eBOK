@@ -40,10 +40,3 @@ def get_status_badge(status, entity_type='payment'):
         }
 
     return badges.get(status, 'bg-secondary')
-
-# Funkcje zachowane dla wstecznej kompatybilności
-def get_payment_status_badge(status):
-    return get_status_badge(status, 'payment')
-
-def get_ticket_status_badge(status):
-    return get_status_badge(status, 'ticket')

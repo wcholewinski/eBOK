@@ -15,17 +15,17 @@ else
 fi
 
 # Utwórz wirtualne środowisko jeśli nie istnieje
-if [ ! -d ".venv1" ]; then
+if [ ! -d ".venv" ]; then
     echo "📦 Tworzenie wirtualnego środowiska..."
-    $PY_CMD -m venv .venv1
+    $PY_CMD -m venv .venv
 fi
 
 # Aktywuj wirtualne środowisko
 echo "🔧 Aktywacja wirtualnego środowiska..."
-if [ -f ".venv1/bin/activate" ]; then
-    source .venv1/bin/activate
+if [ -f ".venv/bin/activate" ]; then
+    source .venv/bin/activate
 else
-    source .venv1/Scripts/activate
+    source .venv/Scripts/activate
 fi
 
 # Aktualizacja pip i setuptools

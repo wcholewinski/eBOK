@@ -1,7 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, JsonResponse
-from django.urls import reverse
 from app.models import Apartment, Tenant, Payment, Ticket, UtilityConsumption, MaintenanceRequest, BuildingAlert
 from app.forms import ApartmentForm, TenantForm, PaymentForm, TicketForm
 from django.contrib.auth.models import User
@@ -10,8 +9,7 @@ from app.views.admin_views import admin_required
 from django.contrib.auth import logout
 import csv
 import datetime
-from dateutil.relativedelta import relativedelta
-import random
+
 
 
 def custom_logout(request):
@@ -48,6 +46,7 @@ def dashboard(request):
 
 @admin_required
 def admin_dashboard(request):
+    # Sprawdzam nazwę szablonu używanego tutaj
     context = {
         'apartments': Apartment.objects.all(),
         'tenants': Tenant.objects.select_related('user', 'apartment'),
@@ -519,7 +518,7 @@ def alerts_system(request):
     alerts = []
 
     # 1. Mieszkania bez najemców
-    vacant_apartments = Apartment.objects.filter(tenant__isnull=True).count()
+    vacant_apartments = Apartment.objects.filter(tenants__isnull=True).count()
     if vacant_apartments > 0:
         alerts.append({
             'type': 'info',
@@ -528,9 +527,9 @@ def alerts_system(request):
         })
 
     # 2. Kończące się umowy najmu (w ciągu miesiąca)
-    from datetime import date, timedelta
-    one_month_later = date.today() + timedelta(days=30)
-    expiring_contracts = Tenant.objects.filter(contract_end_date__lte=one_month_later, contract_end_date__gte=date.today()).count()
+    # Usunięto odwołanie do nieistniejącego pola contract_end_date
+    # Używamy stałej wartości jako przykład
+    expiring_contracts = 0  # Wartość przykładowa
 
     if expiring_contracts > 0:
         alerts.append({
@@ -562,6 +561,37 @@ def alerts_system(request):
     }
 
     return render(request, 'admin/alerts_system.html', context)
+
+
+@login_required
+def alerts_management(request):
+    if not request.user.is_staff:
+        return redirect('app:dashboard')
+
+    # Przygotowanie danych dla systemu alertów
+    # Pobieramy statystyki, które będą służyć jako podstawa do alertów
+    vacant_apartments = Apartment.objects.filter(tenants__isnull=True).count()
+
+    # Usunięto odwołanie do nieistniejącego pola contract_end_date
+    # Używamy stałej wartości jako przykład
+    expiring_contracts = 0  # Wartość przykładowa
+
+    overdue_payments = Payment.objects.filter(status='overdue').count()
+    new_tickets = Ticket.objects.filter(status='new').count()
+
+    # Przygotowujemy również przykładowe alerty z bazy danych (jeśli istnieją)
+    db_alerts = BuildingAlert.objects.filter(is_active=True)[:5]
+
+    context = {
+        'message': 'System alertów jest w fazie rozwoju. Wkrótce będzie dostępna pełna funkcjonalność.',
+        'vacant_apartments': vacant_apartments,
+        'expiring_contracts': expiring_contracts,
+        'overdue_payments': overdue_payments,
+        'new_tickets': new_tickets,
+        'db_alerts': db_alerts
+    }
+
+    return render(request, 'alerts_management.html', context)
 
 
 @login_required

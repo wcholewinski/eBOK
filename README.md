@@ -49,7 +49,7 @@ chmod +x setup.sh
 
 ```bash
 # Utwórz wirtualne środowisko
-python -m venv .venv1
+python -m venv .venv
 
 # Aktywuj wirtualne środowisko
 .venv1\Scripts\activate
