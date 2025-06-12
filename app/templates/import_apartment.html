@@ -12,15 +12,23 @@
     {% endfor %}
   {% endif %}
 
+  <div class="alert alert-info mb-4">
+    <h5>Format pliku CSV</h5>
+    <p>Plik powinien zawierać następujące kolumny:</p>
+    <code>number,floor,area,rent,trash_fee,water_fee,gas_fee</code>
+    <p class="mt-2">Przykład:</p>
+    <pre>number,floor,area,rent,trash_fee,water_fee,gas_fee
+  101,1,50.5,1200,100,150,80
+  102,1,45.0,1000,100,150,80
+  201,2,60.0,1500,100,150,80</pre>
+  </div>
+
   <form method="post" enctype="multipart/form-data" class="mb-4">
     {% csrf_token %}
     <div class="mb-3">
-      {{ form.csv_file.label_tag }}
-      {{ form.csv_file }}
-      {% if form.csv_file.help_text %}
-        <div class="form-text">{{ form.csv_file.help_text }}</div>
-      {% endif %}
-      {{ form.csv_file.errors }}
+      <label for="csv_file" class="form-label">Plik CSV z danymi mieszkań</label>
+      <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
+      <div class="form-text">Plik musi zawierać kolumny: number, floor, area, rent, trash_fee, water_fee, gas_fee</div>
     </div>
     <button type="submit" class="btn btn-primary">Importuj</button>
     <a href="{% url 'app:admin_dashboard' %}" class="btn btn-secondary ms-2">Anuluj</a>

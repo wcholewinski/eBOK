@@ -9,19 +9,32 @@ class ApartmentForm(forms.ModelForm):
     class Meta:
         model = Apartment
         fields = ['number', 'floor', 'area', 'rent', 'trash_fee', 'water_fee', 'gas_fee']
+        widgets = {
+            'number': forms.TextInput(attrs={'class': 'form-control'}),
+            'floor': forms.NumberInput(attrs={'class': 'form-control'}),
+            'area': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'rent': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'trash_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'water_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'gas_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        }
 
 
 class TenantForm(forms.ModelForm):
-    first_name = forms.CharField(required=True, label="Imię")
-    last_name = forms.CharField(required=True, label="Nazwisko")
-    email = forms.EmailField(required=True)
-    username = forms.CharField(required=True, label="Login")
-    password = forms.CharField(widget=forms.PasswordInput, label="Hasło")
-    phone_number = forms.CharField(required=False, label="Numer telefonu")
+    first_name = forms.CharField(required=True, label="Imię", widget=forms.TextInput(attrs={'class': 'form-control'}))
+    last_name = forms.CharField(required=True, label="Nazwisko", widget=forms.TextInput(attrs={'class': 'form-control'}))
+    email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control'}))
+    username = forms.CharField(required=True, label="Login", widget=forms.TextInput(attrs={'class': 'form-control'}))
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}), label="Hasło")
+    phone_number = forms.CharField(required=False, label="Numer telefonu", widget=forms.TextInput(attrs={'class': 'form-control'}))
 
     class Meta:
         model = Tenant
         fields = ['apartment', 'num_occupants']
+        widgets = {
+            'apartment': forms.Select(attrs={'class': 'form-control'}),
+            'num_occupants': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
 
     def save(self, commit=True):
         # Tworzenie użytkownika

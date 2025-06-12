@@ -1,0 +1,71 @@
+<div class="row mt-4">
+    <!-- Dotychczasowa zawartość -->
+
+    <!-- Sekcja niebezpiecznych operacji administracyjnych -->
+    <div class="card mt-4 border-danger">
+        <div class="card-header bg-danger text-white">
+            <h5>Operacje zaawansowane</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <strong>Uwaga!</strong> Poniższe operacje są nieodwracalne i mogą spowodować utratę danych.
+            </div>
+            <!-- PRZYCISK DO USUWANIA WSZYSTKICH DANYCH -->
+            <form method="POST" action="{% url 'app:delete_all_tenants_and_apartments' %}" onsubmit="return confirm('UWAGA! Ta operacja usunie WSZYSTKICH lokatorów i WSZYSTKIE mieszkania z systemu. Operacja jest nieodwracalna. Czy na pewno chcesz kontynuować?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-lg w-100 mb-3">
+                    <i class="fas fa-trash-alt"></i> USUŃ WSZYSTKICH LOKATORÓW I MIESZKANIA
+                </button>
+            </form>
+            <form method="POST" action="{% url 'app:delete_all_tenants_and_apartments' %}" onsubmit="return confirm('UWAGA! Ta operacja usunie WSZYSTKICH lokatorów i WSZYSTKIE mieszkania z systemu. Operacja jest nieodwracalna. Czy na pewno chcesz kontynuować?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash-alt"></i> Usuń wszystkich lokatorów i mieszkania
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">Niebezpieczne operacje</h5>
+            </div>
+            <div class="card-body">
+                <h6 class="card-subtitle mb-3">Operacje, które mogą spowodować utratę danych</h6>
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteAllModal">
+                    <i class="fas fa-trash-alt"></i> Usuń wszystkich lokatorów i mieszkania
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal potwierdzenia usunięcia wszystkiego -->
+<div class="modal fade" id="deleteAllModal" tabindex="-1" aria-labelledby="deleteAllModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteAllModalLabel">UWAGA! Potwierdzenie usunięcia danych</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="fw-bold">Czy na pewno chcesz usunąć WSZYSTKICH lokatorów i WSZYSTKIE mieszkania?</p>
+                <p>Ta operacja jest nieodwracalna i spowoduje usunięcie wszystkich danych z systemu:</p>
+                <ul>
+                    <li>Wszystkich lokatorów i ich kont użytkowników</li>
+                    <li>Wszystkich mieszkań</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                <form action="{% url 'app:delete_all_tenants_and_apartments' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Tak, usuń wszystko</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

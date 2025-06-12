@@ -8,6 +8,10 @@ from app.views.views_main import (
     alerts_management, alerts_system, apartment_list, apartment_detail,
     tenant_list, tenant_detail, payment_list, payment_detail, ticket_detail
 )
+from app.views.admin_views import (
+    delete_apartment, edit_tenant, delete_tenant, bulk_delete_apartments, bulk_delete_tenants,
+    delete_all_tenants_and_apartments
+)
 from app.api import views as api_views
 from app.views import ml_import_view
 
@@ -65,8 +69,19 @@ urlpatterns = [
     path('admin-panel/consumption-trends/', consumption_trends, name='consumption_trends'),
     path('admin-panel/profit-prediction/', profit_prediction, name='profit_prediction'),
 
+    # Zarządzanie mieszkaniami i lokatorami
+    path('admin-panel/delete-apartment/<int:pk>/', delete_apartment, name='delete_apartment'),
+    path('admin-panel/edit-tenant/<int:pk>/', edit_tenant, name='edit_tenant'),
+    path('admin-panel/delete-tenant/<int:pk>/', delete_tenant, name='delete_tenant'),
+    path('admin-panel/bulk-delete-apartments/', bulk_delete_apartments, name='bulk_delete_apartments'),
+    path('admin-panel/bulk-delete-tenants/', bulk_delete_tenants, name='bulk_delete_tenants'),
+    path('admin-panel/delete-all/', delete_all_tenants_and_apartments, name='delete_all_tenants_and_apartments'),
+
     # Import utility consumption data
     path('import-utility-consumption/', import_utility_data, name='import_utility_consumption'),
+
+    # ML Import and Analysis
+    path('admin-panel/ml-import/', ml_import_view.import_and_analyze, name='import_and_analyze'),
 
     # Alerts system
     path('admin-panel/alerts/', alerts_management, name='alerts_management'),

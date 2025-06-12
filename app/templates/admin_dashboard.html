@@ -110,6 +110,66 @@
 
 
 <div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Zarządzanie mieszkaniami</h5>
+            </div>
+            <div class="card-body">
+                <p>Wybierz mieszkania do usunięcia:</p>
+                <form method="post" action="{% url 'app:bulk_delete_apartments' %}" id="delete-apartments-form">
+                    {% csrf_token %}
+                    <div class="apartment-list mb-3" style="max-height: 200px; overflow-y: auto;">
+                        {% for apartment in apartments %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="apartment_ids" value="{{ apartment.id }}" id="apartment-{{ apartment.id }}">
+                            <label class="form-check-label" for="apartment-{{ apartment.id }}">
+                                Mieszkanie {{ apartment.number }} (piętro {{ apartment.floor }}, {{ apartment.area }} m²)
+                            </label>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">Brak mieszkań w bazie</p>
+                        {% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Czy na pewno chcesz usunąć wybrane mieszkania? Ta operacja jest nieodwracalna!')">
+                        Usuń wybrane mieszkania
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Zarządzanie lokatorami</h5>
+            </div>
+            <div class="card-body">
+                <p>Wybierz lokatorów do usunięcia:</p>
+                <form method="post" action="{% url 'app:bulk_delete_tenants' %}" id="delete-tenants-form">
+                    {% csrf_token %}
+                    <div class="tenant-list mb-3" style="max-height: 200px; overflow-y: auto;">
+                        {% for tenant in tenants %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="tenant_ids" value="{{ tenant.id }}" id="tenant-{{ tenant.id }}">
+                            <label class="form-check-label" for="tenant-{{ tenant.id }}">
+                                {{ tenant.user.first_name }} {{ tenant.user.last_name }} ({{ tenant.apartment.number }})
+                            </label>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">Brak lokatorów w bazie</p>
+                        {% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Czy na pewno chcesz usunąć wybranych lokatorów wraz z ich kontami użytkowników? Ta operacja jest nieodwracalna!')">
+                        Usuń wybranych lokatorów
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
     <div class="col-md-4">
         <div class="card text-white bg-primary">
             <div class="card-body">

@@ -214,11 +214,15 @@ def export_apartment_csv(request):
 @admin_required
 def import_apartment_csv(request):
     from django.contrib import messages
-    if request.method == 'POST' and request.FILES['csv_file']:
+    if request.method == 'POST':
+        if 'csv_file' not in request.FILES:
+            messages.error(request, 'Proszę wybrać plik CSV')
+            return redirect('app:import_apartment_csv')
+
         csv_file = request.FILES['csv_file']
         if not csv_file.name.endswith('.csv'):
             messages.error(request, 'Plik musi być w formacie CSV')
-            return redirect('app:admin_dashboard')
+            return redirect('app:import_apartment_csv')
 
         # Sprawdzenie wielkości pliku
         if csv_file.size > 2_000_000:  # 2MB
@@ -255,7 +259,8 @@ def import_apartment_csv(request):
 
         return redirect('app:admin_dashboard')
 
-    return render(request, 'admin/import_apartment.html')
+    # Obsługa żądania GET
+    return render(request, 'import_apartment.html')
 
 
 def import_utility_data(request):
