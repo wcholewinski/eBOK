@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista mieszkań{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Lista mieszkań</h2>
+        {% if user.is_staff %}
+        <a href="{% url 'app:admin_add_apartment' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Dodaj mieszkanie
+        </a>
+        {% endif %}
+    </div>
+
+    {% if apartments %}
+    <div class="row">
+        {% for apartment in apartments %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Mieszkanie {{ apartment.number }}</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Piętro:</strong> {{ apartment.floor }}</p>
+                    <p><strong>Powierzchnia:</strong> {{ apartment.area }} m²</p>
+                    <p><strong>Czynsz:</strong> {{ apartment.rent }} PLN</p>
+
+                    {% with tenant_count=apartment.tenants.count %}
+                    <p>
+                        <strong>Status:</strong>
+                        {% if tenant_count > 0 %}
+                        <span class="badge bg-success">Wynajęte ({{ tenant_count }} {% if tenant_count == 1 %}najemca{% else %}najemców{% endif %})</span>
+                        {% else %}
+                        <span class="badge bg-danger">Dostępne</span>
+                        {% endif %}
+                    </p>
+                    {% endwith %}
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'app:apartment_detail' apartment.id %}" class="btn btn-outline-primary btn-sm w-100">Szczegóły</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Brak mieszkań w systemie.
+        {% if user.is_staff %}
+        <a href="{% url 'app:admin_add_apartment' %}" class="btn btn-sm btn-primary ml-3">Dodaj pierwsze mieszkanie</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

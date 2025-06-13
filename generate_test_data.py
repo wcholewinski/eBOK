@@ -2,7 +2,6 @@ import os
 import django
 import random
 from datetime import datetime, timedelta
-import pandas as pd
 import numpy as np
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'eBOK.settings')

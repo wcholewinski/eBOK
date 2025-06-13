@@ -212,7 +212,10 @@ def export_apartment_csv(request):
 
 @admin_required
 def import_apartment_csv(request):
+    """Import mieszkań z pliku CSV"""
     from django.contrib import messages
+    # Używamy czystego szablonu importu
+    template_name = 'import_apartment_fixed_new.html'
     if request.method == 'POST':
         if 'csv_file' not in request.FILES:
             messages.error(request, 'Proszę wybrać plik CSV')
@@ -239,39 +242,61 @@ def import_apartment_csv(request):
                 return redirect('app:admin_dashboard')
 
             # Import danych
+            imported_count = 0
+            updated_count = 0
             for row in reader:
-                apartment, created = Apartment.objects.update_or_create(
-                    number=row['number'],
-                    defaults={
-                        'floor': row['floor'],
-                        'area': float(row['area']),
-                        'rent': float(row['rent']),
-                        'trash_fee': float(row['trash_fee']),
-                        'water_fee': float(row['water_fee']),
-                        'gas_fee': float(row['gas_fee'])
-                    }
-                )
+                try:
+                    apartment, created = Apartment.objects.update_or_create(
+                        number=row['number'],
+                        defaults={
+                            'floor': int(row['floor']),  # Upewnij się, że to jest liczba całkowita
+                            'area': float(row['area']),
+                            'rent': float(row['rent']),
+                            'trash_fee': float(row['trash_fee']),
+                            'water_fee': float(row['water_fee']),
+                            'gas_fee': float(row['gas_fee'])
+                        }
+                    )
+                    if created:
+                        imported_count += 1
+                    else:
+                        updated_count += 1
+                except Exception as e:
+                    messages.warning(request, f'Błąd w wierszu {row.get("number", "?")}: {str(e)}')
 
-            messages.success(request, 'Dane mieszkań zostały zaimportowane')
+            # Wyświetl informacje o zaimportowanych mieszkaniach
+            if imported_count > 0 or updated_count > 0:
+                messages.success(request, f'Zaimportowano {imported_count} nowych mieszkań, zaktualizowano {updated_count} istniejących.')
+                # Wyświetl kilka ostatnio dodanych/zaktualizowanych mieszkań jako potwierdzenie
+                recent_apartments = Apartment.objects.all().order_by('-id')[:5]
+                for apt in recent_apartments:
+                    messages.info(request, f'Mieszkanie w bazie: Nr {apt.number}, Piętro {apt.floor}, Powierzchnia {apt.area} m²')
+            else:
+                messages.warning(request, 'Nie zaimportowano żadnych mieszkań. Sprawdź format pliku CSV.')
         except Exception as e:
             messages.error(request, f'Wystąpił błąd podczas importu: {str(e)}')
 
         return redirect('app:admin_dashboard')
 
     # Obsługa żądania GET
-    return render(request, 'import_apartment.html')
+    context = {
+        'page_title': 'Import mieszkań z CSV'
+    }
+    return render(request, template_name, context)
 
 
 def import_utility_data(request):
     """Funkcja obsługująca import danych o zużyciu mediów"""
     from django.contrib import messages
+    # Używamy szablonu o prostszej nazwie
+    template_name = 'import_utility.html'
 
     if request.method == 'POST' and request.FILES.get('csv_file'):
         # Tutaj dodaj kod do obsługi importu
         messages.info(request, 'Funkcja importu danych jest w trakcie implementacji')
         return redirect('app:admin_dashboard')
 
-    return render(request, 'admin/import_utility.html', {
+    return render(request, template_name, {
         'title': 'Import danych o zużyciu mediów'
     })
 
@@ -563,35 +588,8 @@ def alerts_system(request):
     return render(request, 'admin/alerts_system.html', context)
 
 
-@login_required
-def alerts_management(request):
-    if not request.user.is_staff:
-        return redirect('app:dashboard')
-
-    # Przygotowanie danych dla systemu alertów
-    # Pobieramy statystyki, które będą służyć jako podstawa do alertów
-    vacant_apartments = Apartment.objects.filter(tenants__isnull=True).count()
-
-    # Usunięto odwołanie do nieistniejącego pola contract_end_date
-    # Używamy stałej wartości jako przykład
-    expiring_contracts = 0  # Wartość przykładowa
-
-    overdue_payments = Payment.objects.filter(status='overdue').count()
-    new_tickets = Ticket.objects.filter(status='new').count()
-
-    # Przygotowujemy również przykładowe alerty z bazy danych (jeśli istnieją)
-    db_alerts = BuildingAlert.objects.filter(is_active=True)[:5]
-
-    context = {
-        'message': 'System alertów jest w fazie rozwoju. Wkrótce będzie dostępna pełna funkcjonalność.',
-        'vacant_apartments': vacant_apartments,
-        'expiring_contracts': expiring_contracts,
-        'overdue_payments': overdue_payments,
-        'new_tickets': new_tickets,
-        'db_alerts': db_alerts
-    }
-
-    return render(request, 'alerts_management.html', context)
+# Druga definicja funkcji alerts_management została usunięta, ponieważ była zduplikowana
+# Pierwsza definicja znajduje się wcześniej w kodzie (około linii 19355)
 
 
 @login_required

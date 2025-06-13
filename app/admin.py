@@ -21,9 +21,12 @@ class TicketAdmin(admin.ModelAdmin):
     ordering = ('-created_at',)
 
 # Rejestracja modeli
-admin.site.register(Apartment, ApartmentAdmin)
+admin.site.register(Apartment, ApartmentAdmin)  # Upewnij się, że ten model jest prawidłowo zarejestrowany
 admin.site.register(Tenant, TenantAdmin)
 admin.site.register(Payment, PaymentAdmin)
 admin.site.register(Ticket, TicketAdmin)
 admin.site.register(UtilityConsumption)
 admin.site.register(BuildingAlert)
+
+# Sprawdź, czy modele są prawidłowo zarejestrowane
+print(f"Zarejestrowane modele w admin: {', '.join([m.__name__ for m in admin.site._registry.keys() if hasattr(m, '__name__')])}") # Diagnostyka

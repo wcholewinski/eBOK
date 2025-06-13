@@ -1,8 +1,8 @@
-{% extends "base.html" %}
+  {% extends 'base.html' %}
 
-{% block title %}Trendy zużycia mediów{% endblock %}
+  {% block title %}Analiza trendów zużycia mediów{% endblock %}
 
-{% block content %}
+  {% block content %}
 <div class="container py-4">
   <div class="row mb-4">
     <div class="col-md-8">
@@ -22,10 +22,10 @@
   <!-- Filtry -->
   <div class="card mb-4">
     <div class="card-body">
-      <form method="GET" class="row g-3">
+      <form method="GET" class="row g-3" id="utility-filter-form">
         <div class="col-md-4">
           <label class="form-label">Typ medium</label>
-          <select class="form-select" name="utility_type">
+          <select class="form-select" name="utility_type" id="utility-type-select">
             <option value="">Wszystkie</option>
             <option value="electricity" {% if selected_utility == 'electricity' %}selected{% endif %}>Prąd</option>
             <option value="water" {% if selected_utility == 'water' %}selected{% endif %}>Woda</option>
@@ -35,7 +35,7 @@
         </div>
         <div class="col-md-4">
           <label class="form-label">Okres</label>
-          <select class="form-select" name="period">
+          <select class="form-select" name="period" id="period-select">
             <option value="monthly" selected>Miesięcznie</option>
             <option value="quarterly">Kwartalnie</option>
             <option value="yearly">Rocznie</option>
@@ -140,7 +140,9 @@
               <td>{{ anomaly.avg }}</td>
               <td class="text-danger">+{{ anomaly.percent }}%</td>
               <td>
-                <button class="btn btn-sm btn-outline-primary">Analizuj</button>
+                <button class="btn btn-sm btn-outline-primary analyze-anomaly" data-utility="{{ anomaly.utility }}" data-month="{{ anomaly.month }}">
+                  Analizuj
+                </button>
               </td>
             </tr>
             {% endfor %}
@@ -159,7 +161,7 @@
   <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
       <h5 class="mb-0">Miesięczne zużycie mediów</h5>
-      <button class="btn btn-sm btn-outline-primary">
+      <button class="btn btn-sm btn-outline-primary" id="export-excel-btn">
         <i class="fas fa-download me-1"></i> Eksportuj do Excel
       </button>
     </div>
@@ -201,21 +203,35 @@
     </div>
   </div>
 </div>
+{% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    // Dane dla wykresów
+    var consumptionLabels = {{ consumption_chart_data.labels|safe }};
+    var electricityData = {{ consumption_chart_data.electricity|safe }};
+    var waterData = {{ consumption_chart_data.water|safe }};
+    var gasData = {{ consumption_chart_data.gas|safe }};
+    var heatingData = {{ consumption_chart_data.heating|safe }};
+
+    var costLabels = {{ cost_chart_data.labels|safe }};
+    var electricityCosts = {{ cost_chart_data.electricity|safe }};
+    var waterCosts = {{ cost_chart_data.water|safe }};
+    var gasCosts = {{ cost_chart_data.gas|safe }};
+    var heatingCosts = {{ cost_chart_data.heating|safe }};
+
     // Wykres zużycia mediów
     var consumptionCtx = document.getElementById('consumptionChart').getContext('2d');
     var consumptionChart = new Chart(consumptionCtx, {
       type: 'line',
       data: {
-        labels: {{ consumption_chart_data.labels|safe }},
+        labels: consumptionLabels,
         datasets: [
           {
             label: 'Prąd (kWh)',
-            data: {{ consumption_chart_data.electricity|safe }},
+            data: electricityData,
             borderColor: 'rgba(54, 162, 235, 1)',
             backgroundColor: 'rgba(54, 162, 235, 0.1)',
             borderWidth: 2,
@@ -223,7 +239,7 @@
           },
           {
             label: 'Woda (m³)',
-            data: {{ consumption_chart_data.water|safe }},
+            data: waterData,
             borderColor: 'rgba(75, 192, 192, 1)',
             backgroundColor: 'rgba(75, 192, 192, 0.1)',
             borderWidth: 2,
@@ -231,7 +247,7 @@
           },
           {
             label: 'Gaz (m³)',
-            data: {{ consumption_chart_data.gas|safe }},
+            data: gasData,
             borderColor: 'rgba(255, 99, 132, 1)',
             backgroundColor: 'rgba(255, 99, 132, 0.1)',
             borderWidth: 2,
@@ -239,7 +255,7 @@
           },
           {
             label: 'Ogrzewanie (kWh)',
-            data: {{ consumption_chart_data.heating|safe }},
+            data: heatingData,
             borderColor: 'rgba(255, 159, 64, 1)',
             backgroundColor: 'rgba(255, 159, 64, 0.1)',
             borderWidth: 2,
@@ -264,40 +280,49 @@
     // Wykres kosztów mediów
     var costsCtx = document.getElementById('costsChart').getContext('2d');
     var costsChart = new Chart(costsCtx, {
-      type: 'bar',
+      type: 'line',
       data: {
-        labels: {{ cost_chart_data.labels|safe }},
+        labels: costLabels,
         datasets: [
           {
             label: 'Prąd',
-            data: {{ cost_chart_data.electricity|safe }},
-            backgroundColor: 'rgba(54, 162, 235, 0.7)'
+            data: electricityCosts,
+            borderColor: 'rgba(54, 162, 235, 1)',
+            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+            borderWidth: 2,
+            tension: 0.1
           },
           {
             label: 'Woda',
-            data: {{ cost_chart_data.water|safe }},
-            backgroundColor: 'rgba(75, 192, 192, 0.7)'
+            data: waterCosts,
+            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+            borderWidth: 2,
+            tension: 0.1
           },
           {
             label: 'Gaz',
-            data: {{ cost_chart_data.gas|safe }},
-            backgroundColor: 'rgba(255, 99, 132, 0.7)'
+            data: gasCosts,
+            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+            borderWidth: 2,
+            tension: 0.1
           },
           {
             label: 'Ogrzewanie',
-            data: {{ cost_chart_data.heating|safe }},
-            backgroundColor: 'rgba(255, 159, 64, 0.7)'
+            data: heatingCosts,
+            borderColor: 'rgba(255, 159, 64, 1)',
+            backgroundColor: 'rgba(255, 159, 64, 0.1)',
+            borderWidth: 2,
+            tension: 0.1
           }
         ]
       },
       options: {
         responsive: true,
         scales: {
-          x: {
-            stacked: true
-          },
           y: {
-            stacked: true,
+            beginAtZero: true,
             title: {
               display: true,
               text: 'Koszt (zł)'
@@ -319,5 +344,4 @@
     });
   });
 </script>
-{% endblock %}
 {% endblock %}

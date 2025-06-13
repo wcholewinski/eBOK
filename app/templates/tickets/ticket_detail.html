@@ -31,7 +31,181 @@
                     <div class="mb-3">
                         <strong>Mieszkanie:</strong> {% if ticket.tenant.apartment %}{{ ticket.tenant.apartment.address }}{% else %}Nie przypisano{% endif %}
                     </div>
+{% extends 'base.html' %}
 
+{% block title %}Szczegóły zgłoszenia{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ ticket.title }}</h5>
+                    {% if user.is_staff %}
+                    <a href="{% url 'app:admin_edit_ticket' ticket.id %}" class="btn btn-sm btn-light">Edytuj</a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p><strong>Najemca:</strong> <a href="{% url 'app:tenant_detail' ticket.tenant.id %}">{{ ticket.tenant.user.first_name }} {{ ticket.tenant.user.last_name }}</a></p>
+                            <p><strong>Mieszkanie:</strong> <a href="{% url 'app:apartment_detail' ticket.tenant.apartment.id %}">{{ ticket.tenant.apartment.number }}</a></p>
+                            <p><strong>Data utworzenia:</strong> {{ ticket.created_at|date:"d.m.Y H:i" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p>
+                                <strong>Status:</strong>
+                                {% if ticket.status == 'new' %}
+                                <span class="badge bg-primary">Nowe</span>
+                                {% elif ticket.status == 'in_progress' %}
+                                <span class="badge bg-warning">W trakcie</span>
+                                {% elif ticket.status == 'closed' %}
+                                <span class="badge bg-success">Zamknięte</span>
+                                {% endif %}
+                            </p>
+                            <p>
+                                <strong>Priorytet:</strong>
+                                {% if ticket.priority == 'high' %}
+                                <span class="badge bg-danger">Wysoki</span>
+                                {% elif ticket.priority == 'normal' %}
+                                <span class="badge bg-warning">Normalny</span>
+                                {% elif ticket.priority == 'low' %}
+                                <span class="badge bg-info">Niski</span>
+                                {% endif %}
+                            </p>
+                            {% if ticket.updated_at %}
+                            <p><strong>Ostatnia aktualizacja:</strong> {{ ticket.updated_at|date:"d.m.Y H:i" }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">Opis zgłoszenia</h6>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ ticket.description|linebreaks }}</p>
+                        </div>
+                    </div>
+
+                    {% if ticket.solution %}
+                    <div class="card mb-3">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0">Rozwiązanie</h6>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ ticket.solution|linebreaks }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if ticket.technician_notes and user.is_staff %}
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">Notatki techniczne</h6>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ ticket.technician_notes|linebreaks }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Akcje</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if user.is_staff %}
+                        <a href="{% url 'app:admin_edit_ticket' ticket.id %}" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edytuj zgłoszenie
+                        </a>
+
+                        {% if ticket.status != 'closed' %}
+                        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#resolveTicketModal">
+                            <i class="fas fa-check-circle"></i> Oznacz jako rozwiązane
+                        </button>
+                        {% endif %}
+
+                        {% endif %}
+
+                        <a href="{% url 'app:tickets' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Powrót do listy
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Informacje</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert {% if ticket.status == 'new' %}alert-primary{% elif ticket.status == 'in_progress' %}alert-warning{% else %}alert-success{% endif %}">
+                        <i class="fas {% if ticket.status == 'new' %}fa-file-alt{% elif ticket.status == 'in_progress' %}fa-tools{% else %}fa-check-circle{% endif %}"></i>
+                        Status: <strong>
+                            {% if ticket.status == 'new' %}Nowe
+                            {% elif ticket.status == 'in_progress' %}W trakcie
+                            {% else %}Zamknięte
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <div class="alert {% if ticket.priority == 'high' %}alert-danger{% elif ticket.priority == 'normal' %}alert-warning{% else %}alert-info{% endif %}">
+                        <i class="fas fa-exclamation-circle"></i>
+                        Priorytet: <strong>
+                            {% if ticket.priority == 'high' %}Wysoki
+                            {% elif ticket.priority == 'normal' %}Normalny
+                            {% else %}Niski
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    {% if ticket.status == 'closed' %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-calendar-check"></i>
+                        <strong>Data zamknięcia:</strong> {{ ticket.updated_at|date:"d.m.Y" }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if user.is_staff and ticket.status != 'closed' %}
+<!-- Modal do oznaczania zgłoszenia jako rozwiązane -->
+<div class="modal fade" id="resolveTicketModal" tabindex="-1" aria-labelledby="resolveTicketModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="resolveTicketModalLabel">Oznacz zgłoszenie jako rozwiązane</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'app:admin_edit_ticket' ticket.id %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="solution" class="form-label">Rozwiązanie problemu:</label>
+                        <textarea class="form-control" id="solution" name="solution" rows="4" required>{{ ticket.solution }}</textarea>
+                    </div>
+                    <input type="hidden" name="status" value="closed">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="submit" class="btn btn-success">Zapisz i zamknij zgłoszenie</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
                     <div class="mb-4">
                         <strong>Data zgłoszenia:</strong> {{ ticket.created_at|date:"d.m.Y H:i" }}
                     </div>

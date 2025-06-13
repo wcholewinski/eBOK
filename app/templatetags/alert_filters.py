@@ -18,11 +18,3 @@ def sub(value, arg):
         return float(value) - float(arg)
     except (ValueError, TypeError):
         return value
-
-@register.filter
-def sub(value, arg):
-    """Odejmuje arg od value"""
-    try:
-        return float(value) - float(arg)
-    except (ValueError, TypeError):
-        return value

@@ -1,0 +1,74 @@
+{% extends 'base_import.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Import i analiza ML</h2>
+            <p class="text-muted">Zaimportuj dane z pliku CSV i przeprowadź analizę ML.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="model_type" class="form-label">Typ danych</label>
+                            <select class="form-select" id="model_type" name="model_type" required>
+                                {% for value, label in model_types %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="csv_file" class="form-label">Wybierz plik CSV</label>
+                            <input type="file" class="form-control" id="csv_file" name="csv_file" required>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="run_ml" name="run_ml">
+                            <label class="form-check-label" for="run_ml">Uruchom analizę ML po imporcie</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Importuj i analizuj</button>
+                        <a href="{% url 'app:admin_dashboard' %}" class="btn btn-secondary">Anuluj</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-light">Dostępne typy analizy</div>
+                <div class="card-body">
+                    <dl>
+                        <dt>Mieszkania</dt>
+                        <dd>Grupowanie mieszkań wg podobieństwa, analiza efektywności budynku</dd>
+
+                        <dt>Zużycie mediów</dt>
+                        <dd>Prognozowanie zużycia, wykrywanie anomalii, trendy</dd>
+
+                        <dt>Płatności</dt>
+                        <dd>Prognozy finansowe, analiza trendów płatności</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col">
+            <div class="alert alert-info">
+                <h5>Ważne informacje:</h5>
+                <ul>
+                    <li>Plik musi być w formacie CSV (wartości rozdzielone przecinkami)</li>
+                    <li>Pierwsza linia musi zawierać nazwy kolumn</li>
+                    <li>Format danych zależy od wybranego typu modelu</li>
+                    <li>Analiza ML może zająć kilka chwil, zależnie od ilości danych</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

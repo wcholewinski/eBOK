@@ -4,8 +4,8 @@
 <div class="container">
     <div class="row mb-4">
         <div class="col">
-            <h2>Import mieszkań z pliku CSV</h2>
-            <p class="text-muted">Zaimportuj dane mieszkań z pliku CSV. Plik musi zawierać wymagane nagłówki.</p>
+            <h2>Import danych o zużyciu mediów</h2>
+            <p class="text-muted">Zaimportuj dane o zużyciu mediów z pliku CSV. Plik musi zawierać wymagane nagłówki.</p>
         </div>
     </div>
 
@@ -30,10 +30,10 @@
             <div class="card">
                 <div class="card-header bg-light">Przykładowy format pliku CSV</div>
                 <div class="card-body">
-                    <pre>number,floor,area,rent,trash_fee,water_fee,gas_fee
-1A,1,45.5,1200,50,120,80
-2B,2,60.2,1500,60,150,100
-3C,3,75.0,1800,70,180,120</pre>
+                    <pre>apartment_number,utility_type,date,consumption,cost
+1A,electricity,2024-01-15,125.5,78.50
+1A,water,2024-01-15,3.2,45.80
+2B,gas,2024-01-15,25.8,64.20</pre>
                 </div>
             </div>
         </div>
@@ -46,9 +46,10 @@
                 <ul>
                     <li>Plik musi być w formacie CSV (wartości rozdzielone przecinkami)</li>
                     <li>Pierwsza linia musi zawierać nazwy kolumn</li>
-                    <li>Wymagane kolumny: number, floor, area, rent, trash_fee, water_fee, gas_fee</li>
-                    <li>Liczby używają kropki jako separatora dziesiętnego (np. 45.5)</li>
-                    <li>Maksymalny rozmiar pliku to 2MB</li>
+                    <li>Wymagane kolumny: apartment_number, utility_type, date, consumption, cost</li>
+                    <li>Dozwolone typy mediów: electricity, water, gas, heating</li>
+                    <li>Format daty: YYYY-MM-DD</li>
+                    <li>Liczby używają kropki jako separatora dziesiętnego</li>
                 </ul>
             </div>
         </div>

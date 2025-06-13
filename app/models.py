@@ -128,7 +128,7 @@ class Payment(models.Model):
         verbose_name_plural = 'Płatności'
 
     def __str__(self):
-        return f'Płatność: {self.amount} zł - {self.tenant.user.username} (Mieszkanie {self.tenant.apartment.number})'
+        return f'Płatność: {self.amount:.2f} zł - {self.tenant.user.username} (Mieszkanie {self.tenant.apartment.number})'
 
 
 class Ticket(models.Model):

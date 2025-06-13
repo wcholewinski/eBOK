@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista najemców{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Lista najemców</h2>
+        {% if user.is_staff %}
+        <a href="{% url 'app:admin_add_tenant' %}" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i> Dodaj najemcę
+        </a>
+        {% endif %}
+    </div>
+
+    {% if tenants %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Imię i nazwisko</th>
+                    <th>Mieszkanie</th>
+                    <th>Kontakt</th>
+                    <th>Data wprowadzenia</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tenant in tenants %}
+                <tr>
+                    <td>{{ tenant.user.first_name }} {{ tenant.user.last_name }}</td>
+                    <td>
+                        <a href="{% url 'app:apartment_detail' tenant.apartment.id %}">
+                            {{ tenant.apartment.number }}
+                        </a>
+                    </td>
+                    <td>
+                        <div>{{ tenant.user.email }}</div>
+                        <div>{{ tenant.phone_number }}</div>
+                    </td>
+                    <td>{{ tenant.move_in_date|date:"d.m.Y" }}</td>
+                    <td>
+                        <a href="{% url 'app:tenant_detail' tenant.id %}" class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        {% if user.is_staff %}
+                        <a href="{% url 'app:edit_tenant' tenant.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'app:delete_tenant' tenant.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Czy na pewno chcesz usunąć tego najemcę?')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Brak najemców w systemie.
+        {% if user.is_staff %}
+        <a href="{% url 'app:admin_add_tenant' %}" class="btn btn-sm btn-primary ml-3">Dodaj pierwszego najemcę</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

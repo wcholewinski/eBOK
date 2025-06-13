@@ -9,6 +9,7 @@ import io, csv
 
 # Import modeli aplikacji
 from app.models import Apartment, Tenant, Payment, Ticket, UtilityConsumption, MaintenanceRequest, BuildingAlert
+from app.constants import PAID, PENDING, NEW
 
 
 class BasicTest(TestCase):
@@ -60,8 +61,8 @@ class ModelTest(TestCase):
         self.payment = Payment.objects.create(
             tenant=self.tenant,
             amount=1000.00,
-            type=Payment.RENT,
-            status=Payment.PENDING
+            type='rent',  # Użyj stringa zamiast Payment.RENT
+            status=PENDING  # Import z constants.py
         )
 
         # Tworzenie testowego zgłoszenia
@@ -69,7 +70,7 @@ class ModelTest(TestCase):
             tenant=self.tenant,
             title="Test ticket",
             description="Test description",
-            status=Ticket.NEW,
+            status=NEW,  # Import z constants.py
             priority="medium"
         )
 
@@ -87,13 +88,13 @@ class ModelTest(TestCase):
         """Test modelu Payment"""
         self.assertIn("Płatność: 1000.00 zł", str(self.payment))
         self.assertEqual(self.payment.tenant, self.tenant)
-        self.assertEqual(self.payment.status, Payment.PENDING)
+        self.assertEqual(self.payment.status, PENDING)
 
     def test_ticket_model(self):
         """Test modelu Ticket"""
         self.assertEqual(str(self.ticket), "Test ticket (Nowe)")
         self.assertEqual(self.ticket.tenant, self.tenant)
-        self.assertEqual(self.ticket.status, Ticket.NEW)
+        self.assertEqual(self.ticket.status, NEW)
 
 
 class ViewTest(TestCase):

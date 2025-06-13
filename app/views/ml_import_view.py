@@ -80,8 +80,8 @@ def import_and_analyze(request):
 
         return redirect('app:import_and_analyze')
 
-    # Formularz
-    return render(request, 'import_analyze_form.html', {
+    # Formularz - używamy nowego szablonu bazowego
+    return render(request, 'import_analyze.html', {
         'title': 'Import i analiza ML',
         'model_types': [
             ('apartment', 'Mieszkania'),

@@ -143,7 +143,7 @@ def export_prediction_csv(request):
             'filename': _get_cost_filename(utility_type, locale)
         },
         'income': {
-            'func': lambda: analyzer.predict_income(forecast_months),
+            'func': lambda: analyzer.calculate_profit_predictions(forecast_months),  # Używamy calculate_profit_predictions zamiast predict_income
             'filename': 'prognoza_przychodow.csv' if locale == 'pl' else 'income_prediction.csv'
         },
         'profit': {

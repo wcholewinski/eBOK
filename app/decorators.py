@@ -3,9 +3,12 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from functools import wraps
 from django.core.exceptions import PermissionDenied
+from functools import wraps
 
 def admin_required(view_func):
     """Dekorator sprawdzający czy użytkownik jest administratorem"""
+    @wraps(view_func)  # Poprawne zachowanie metadanych funkcji
+    @login_required    # Upewnij się, że użytkownik jest zalogowany
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
